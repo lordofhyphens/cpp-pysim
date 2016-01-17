@@ -1,0 +1,9 @@
+random/greedy partition method:
+
+1) pick a primary output
+2) add its fanins to the partition
+3) Continue adding fanins until max W is hit. 
+3.1) If a gate is already in a partition, don't add it.
+3.2) If PO is only member of parition, add it to its fanin's partition instead.
+4) pick another primary output. 
+5) If no more viable POs, pick a node at random that is not in a partition, treat its output as a PO (add BSC). 
