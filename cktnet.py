@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import re
 import argparse
+import random
 
 class Gate(object):
     def __init__(self, name):
@@ -19,24 +20,84 @@ def in_partition(g, part):
     if result:
         return result
     else:
+        try:
+            result = False
+            for r in g:
+                result = result | in_partition(g, r)
+        except TypeError:
+            return False
         # see if the contents of part are themselves containers?
         pass
 
 def partition(ckt, w, po):
-    assigned = []
+    start_list = po
+    gate_pool = set(ckt)
+    assigned = set()
     partitions = []
     p = []
     # pick a PO at random
+    start_list = POs
+    while len(start_list)>0:
+        
+        z = random.choice(list(start_list))
+        start_list.remove(z)
+        print "Making partition from " + z
+        i = set()
+        i.add(z)
+        part = make_partition(ckt, i, i , w, assigned)
+        if part is None:
+            print "returned none"
+        else:
+            gate_pool = gate_pool - part
+            assigned = assigned & part
+            partitions = partitions + [part]
+    while len(gate_pool) > 0:
+        # pick a gate at random
+        z = random.choice(list(gate_pool))
+        print "Making partition from " + z
+        i = set()
+        i.add(z)
+        gate_pool = gate_pool - i
+        part = make_partition(ckt, i, i , w, assigned)
+        if part is None:
+            print "returned none"
+            partitions = partitions + [i]
+            assigned = assigned & i
+        else:
+            gate_pool = gate_pool - part
+            assigned = assigned & part
+            partitions = partitions + [part]
+    print "All Partitions:", partitions
 
-def add_to_partition(ckt, s, w, partitions):
-    inputs = 0
 
-    # if s is in a partition already we don't want to touch it
-    if any([in_partition(s, k) for k in partitions]):
+def make_partition(ckt, frontier, current_partition, w, partitions):
+    """ s is the current frontier """
+    inputs = len(frontier)
+    if inputs > w:
+        print "Input count ", len(frontier), " exceeds ", w
         return None
-    # number of inputs needed is the sum of the fanins of the furthest range.
-    for fin in ckt[s].fins:
-        add_to_partition(ckt, fin, w, partitions)
+    new_frontier = set()
+    current_partition = set(current_partition | frontier)
+    for s in current_partition:
+        # create a new frontier from the fan-in of the current frontier. 
+        if s in partitions or s in current_partition:
+            print s, "already in a partition"
+            continue
+        if len(ckt[s].fins) == 0:
+            print s, "has no inputs"
+            continue
+        for fin in ckt[s].fins:
+            new_frontier.add(fin)
+    if new_frontier == frontier:
+        print "Frontier isn't changing..."
+        return None
+    print new_frontier
+    p = make_partition(ckt, new_frontier, current_partition, w, partitions)
+    if p is not None:
+        p = current_partition | p
+    else:
+        p = current_partition
+    return p
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('file', metavar='N', type=str, nargs='+',
@@ -79,7 +140,7 @@ for f in args.file:
                 r = re.findall(gate_form, l)[0]
                 g = Gate(r[0].strip())
                 g.func = r[1].strip()
-                g.fins = [ x for x in re.split(split_form, r[2].strip())]
+                g.fins = [ x.strip() for x in re.split(split_form, r[2].strip())]
                 ckt[r[0].strip()] = g
             else:
                 print l
@@ -91,5 +152,5 @@ for k,z in ckt.items():
         for i in fots:
             z.fots.append(i.name)
 
-for k,z in ckt.items():
-    print z.fots
+
+partition(ckt, 15, POs)
