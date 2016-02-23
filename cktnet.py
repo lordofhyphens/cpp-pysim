@@ -33,6 +33,7 @@ def gen_test_points():
       i = i + 1
 
 class Partition(object):
+    INPUTS=["bsc","input"]
     def __init__(self, ckt, initial_frontier = [], max_w = 0, available = []):
         self.members = []
         self.ckt = ckt
@@ -42,6 +43,8 @@ class Partition(object):
         self.w = len(set([y for sublist in [self.ckt[x].fins for x in self.frontier if self.ckt[x].fins != []] for y in sublist]))
         self.members = self.members + self.frontier
         self.output = self.frontier # initial gates are the output.
+    def get_inputs(self):
+        return list({x for x in self.members if self.ckt[x].function.lower() in self.INPUTS})
 
     def grow(self, initial = None):
         """Expand this partition out one stage, if possible"""
@@ -106,7 +109,7 @@ class sort_topological(object):
 def grow_partition(ckt, g, size, w):
     gate = ckt[g]
 
-def read_bench_file(infile):
+def read_bench_file(f):
     in_form = re.compile("INPUT\((.*)\)")
     out_form = re.compile("OUTPUT\((.*)\)")
     comment_form = re.compile("^#")
@@ -120,31 +123,30 @@ def read_bench_file(infile):
     PIs = []
     BSCs = []
     partitions = []
-    for f in infile:
-        with open(f, 'r') as infile:
-            for l in infile:
-                if re.match(comment_form, l) is not None:
-                    pass
-                elif re.match(in_form, l) is not None:
-                    r = re.findall(in_form, l)
-                    if r[0].strip() not in placed:
-                        placed.append(r[0].strip())
-                    ckt[r[0].strip()] = Gate(r[0].strip())
-                    ckt[r[0].strip()].function = "input"
-                    PIs.append([r[0].strip()])
-                    
-                elif re.match(out_form, l) is not None:
-                    r = re.findall(out_form, l)
-                    if r[0].strip() not in POs:
-                        POs.append(r[0].strip())
-                elif re.match(gate_form, l) is not None:
-                    r = re.findall(gate_form, l)[0]
-                    g = Gate(r[0].strip())
-                    g.function = r[1].strip()
-                    g.fins = [ x.strip() for x in re.split(split_form, r[2].strip())]
-                    ckt[r[0].strip()] = g
-                else:
-                    print l
+    with open(f, 'r') as infile:
+        for l in infile:
+            if re.match(comment_form, l) is not None:
+                pass
+            elif re.match(in_form, l) is not None:
+                r = re.findall(in_form, l)
+                if r[0].strip() not in placed:
+                    placed.append(r[0].strip())
+                ckt[r[0].strip()] = Gate(r[0].strip())
+                ckt[r[0].strip()].function = "input"
+                PIs.append([r[0].strip()])
+                
+            elif re.match(out_form, l) is not None:
+                r = re.findall(out_form, l)
+                if r[0].strip() not in POs:
+                    POs.append(r[0].strip())
+            elif re.match(gate_form, l) is not None:
+                r = re.findall(gate_form, l)[0]
+                g = Gate(r[0].strip())
+                g.function = r[1].strip()
+                g.fins = [ x.strip() for x in re.split(split_form, r[2].strip())]
+                ckt[r[0].strip()] = g
+            else:
+                print l
 
 # add all gates that have this as a fanin to this gate's fanout list
     for k,z in ckt.items():
@@ -209,8 +211,8 @@ def partition_ckt(ckt, POs):
        ckt[new_tp.name] = new_tp
        p.members.append(new_tp.name)
        ckt[p.members[0]].tps.append(new_tp.name)
+
     return ckt, parts
 
 if __name__ == "__main__": 
     pass
-

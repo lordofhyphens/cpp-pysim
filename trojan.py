@@ -7,7 +7,7 @@ import random
 # output gates are XORs or XNORs with one fan-in unspecificed (for integration into system)
 
 class Trojan(object):
-    _gate_enum = ["AND", "OR", "NOR", "XOR", "XNOR", "NAND", "BUFF"]
+    _gate_enum = ["AND", "OR", "NOR", "XOR", "XNOR", "NAND", "BUFF", "NOT"]
     _out_enum = [ "OR", "NOR", "XNOR", "XOR" ]
     def __init__(self, name = None, fin = None , fot = None, seed = None):
         random.seed(seed)
@@ -50,13 +50,14 @@ class Trojan(object):
             outgate.fins.append(g)
             outgate.fins.append(None)
             outgate.fots.append(None)
+            self.set_fots(outgate)
             self.gates[outgate.name] = outgate
             gateId = gateId + 1
         self.gates["DUMMY"].fots = list(set(self.gates["DUMMY"].fots))
         for g in self.gates:
             self.gates[g].fots = list(set(self.gates[g].fots))
     def get_fins(self, frontier, gate):
-        if gate.function is "BUFF":
+        if gate.function is "BUFF" or gate.function is "NOT":
             sample = 1
         else:
             sample = random.randint(2, len(frontier))
@@ -73,7 +74,8 @@ class Trojan(object):
         return result, frontier
     def set_fots(self, g):
         for i in g.fins:
-            self.gates[i].fots.append(g.name)
+            if i is not None:
+                self.gates[i].fots.append(g.name)
     def __str__(self):
         return str([str(self.gates[x]) for x in (self.gates)])
 
