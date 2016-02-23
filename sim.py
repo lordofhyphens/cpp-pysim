@@ -22,20 +22,29 @@ class PySim(object):
         pass
 
 parser = argparse.ArgumentParser(description='Simulate partitions from pickled representations.')
+parser.add_argument('partitions', type=str, nargs=1, help='Partition pickle')
+parser.add_argument('tests', type=str, nargs=1, help='Test input pickle')
 parser.add_argument('pickled_file', metavar='N', type=str, nargs='+',
                    help='pickled files')
 
 args=parser.parse_args()
+
+f = open(args.tests, 'r')
+test_inputs = pickle.load(f)
+f.close()
+f = open(args.partitions, 'r')
+partitions = pickle.load(f)
+f.close()
 for f in args.pickled_file:
     f = open(f, 'r')
     packed = pickle.load(f)
+    f.close()
+
     ckt = packed[0]
     bad_ckt = packed[1]
     PIs = packed[2]
     POs = packed[3]
-    partitions = packed[4]
-    t = packed[5]
-    test_inputs = packed[6]
+    t = packed[4]
     partint = map(lambda x: x.get_inputs(), partitions)
     
     for z in test_inputs:
@@ -44,6 +53,5 @@ for f in args.pickled_file:
             print list(zip(k,v))
         
 
-    f.close()
 
 
