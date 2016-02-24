@@ -1,10 +1,22 @@
 from cktnet import Gate, Partition
 import argparse
 import itertools
+import re
 try:
    import cPickle as pickle
 except ImportError:
    import pickle
+
+def get_regular_po(gate, ckt):
+    print gate
+    a = re.search("__TrojCkt", gate)
+    if a is not None:
+        for k in ckt[gate].fins:
+            a = re.search("__TrojCkt", k)
+            if k is None:
+                return k
+    return gate
+
 
 _enum_gates = {"AND", "NAND", "OR", "NOR", "BUFF", "XOR", "XNOR", "DFF_OUT", "DFF", "NOT"}
 class Event(object):
@@ -83,7 +95,6 @@ class PySim(object):
         self.t = self.t + 1
     def run(self):
         while(len(self.inputs) > 0):
-            print "Cycle", self.cycle
             while(self.t < max(self.current_queue.iterkeys())):
                 self.sim_next()
             self.sim_cycle()
@@ -112,6 +123,7 @@ args=parser.parse_args()
 f = open(args.tests, 'r')
 test_inputs = pickle.load(f)
 f.close()
+print args.ff
 
 if args.parts is not None:
     f = open(args.parts, 'r')
@@ -132,4 +144,7 @@ for f in args.pickled_file:
     to_sim = ckt if args.ff else bad_ckt
     sim_element = PySim(to_sim, test_inputs, None) if (args.parts is None) else PySim(to_sim, test_inputs, partitions)
     sim_element.run()
-    print {x:sim_element.result[x].max() for x in sim_element.result if sim_element.ckt[x].function in "TP" or len(sim_element.ckt[x].fots) == 0}
+    output = {x:sim_element.result[x].max() for x in sim_element.result if sim_element.ckt[x].function in "TP" or len(sim_element.ckt[x].fots) == 0}
+    output = {get_regular_po(x, ckt):y for x, y in output.iteritems()}
+    print output
+
