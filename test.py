@@ -1,5 +1,6 @@
 from trojan import Trojan, parasite
 from cktnet import read_bench_file, partition_ckt
+import copy
 import argparse
 import random
 import itertools
@@ -59,7 +60,7 @@ for infile in args.file:
             f.close()
         for i in range(0,args.count):
             t = Trojan(fin = args.fin, fot = args.fot, seed = args.seed)
-            bad_ckt, POs = parasite(ckt, POs, t)
+            bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
             test_ckt = [ckt, bad_ckt, PIs, POs, t]
             f = open("pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+".pickle", 'w')
             pickle.dump(test_ckt, f)
