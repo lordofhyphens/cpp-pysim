@@ -12,7 +12,7 @@ class Gate(object):
         self.fots = []
         self.bscs = []
         self.tps = [] # test points
-        self.delay = None
+        self.delay = 1
     def __str__(self):
         return self.name + ": " + str(self.function) + ", " + str(self.fins) + "," + str(self.fots)
 
