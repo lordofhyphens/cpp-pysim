@@ -149,9 +149,9 @@ if args.parts is not None:
     f.close()
 
 for f in args.pickled_file:
-    f = open(f, 'r')
-    packed = pickle.load(f)
-    f.close()
+    fi = open(f, 'r')
+    packed = pickle.load(fi)
+    fi.close()
 
     ckt = packed[0]
     bad_ckt = packed[1]
@@ -162,8 +162,8 @@ for f in args.pickled_file:
     to_sim = ckt if args.ff else bad_ckt
     sim_element = PySim(to_sim, test_inputs, None) if (args.parts is None) else PySim(to_sim, test_inputs, partitions)
     sim_element.run()
-    output = {x:sim_element.result[x].max() for x in sim_element.result if sim_element.ckt[x].function in "TP" or len(sim_element.ckt[x].fots) == 0}
+    output = {x:sim_element.result[x] for x in sim_element.result if sim_element.ckt[x].function in "TP" or len(sim_element.ckt[x].fots) == 0}
     output = {get_regular_po(x, ckt):y for x, y in output.iteritems()}
-    print output
-    print [ckt[x].function for x in ckt]
 
+    z = open("results_"+f,'w')
+    pickle.dump(f, output)
