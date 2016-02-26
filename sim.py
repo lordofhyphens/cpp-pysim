@@ -87,9 +87,9 @@ class PySim(object):
             for inp in zip(k,v):
                 self.result[inp[0]][self.t] = inp[1]
                 self.current_queue[self.t].add(inp[0])
-        output = {x:self.result[x].max(self.t) for x in self.result if self.ckt[x].function in "TP" or len(self.ckt[x].fots) == 0}
-        output = {get_regular_po(x, ckt):y for x, y in output.iteritems()}
         if args.verbose > LOG.INFO:
+            output = {x:self.result[x].max(self.t) for x in self.result if self.ckt[x].function in "TP" or len(self.ckt[x].fots) == 0}
+            output = {get_regular_po(x, self.ckt):y for x, y in output.iteritems()}
             print "Outputs at time ", self.t, output
         self.cycle = self.cycle + 1
 
@@ -116,8 +116,6 @@ class PySim(object):
             while(self.t <= max(self.current_queue.iterkeys())):
                 print "t: ", self.t
                 self.sim_next()
-            output = {x:self.result[x].max() for x in self.result if self.ckt[x].function in "TP" or len(self.ckt[x].fots) == 0}
-            output = {get_regular_po(x, ckt):y for x, y in output.iteritems()}
             try:
                 self.sim_cycle()
             except IndexError:
@@ -176,10 +174,6 @@ for f in args.pickled_file:
         sim_element = PySim(to_sim, test_inputs, None) if (args.parts is None) else PySim(to_sim, test_inputs, partitions)
         sim_element.run()
         output = {x:sim_element.result[x] for x in sim_element.result if sim_element.ckt[x].function in "TP" or len(sim_element.ckt[x].fots) == 0}
-        if args.ff:
-            output = {get_regular_po(x, ckt):y for x, y in output.iteritems()}
-        else:
-            output = {get_regular_po(x, bad_ckt):y for x, y in output.iteritems()}
         if args.ff:
             z = open("results_"+f+"_ff",'w')
         else:
