@@ -176,8 +176,13 @@ for f in args.pickled_file:
         sim_element = PySim(to_sim, test_inputs, None) if (args.parts is None) else PySim(to_sim, test_inputs, partitions)
         sim_element.run()
         output = {x:sim_element.result[x] for x in sim_element.result if sim_element.ckt[x].function in "TP" or len(sim_element.ckt[x].fots) == 0}
-        output = {get_regular_po(x, ckt):y for x, y in output.iteritems()}
-
-        z = open("results_"+f,'w')
+        if args.ff:
+            output = {get_regular_po(x, ckt):y for x, y in output.iteritems()}
+        else:
+            output = {get_regular_po(x, bad_ckt):y for x, y in output.iteritems()}
+        if args.ff:
+            z = open("results_"+f+"_ff",'w')
+        else:
+            z = open("results_"+f,'w')
         pickle.dump(z, output)
         z.close()
