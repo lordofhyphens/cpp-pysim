@@ -23,6 +23,8 @@ parser.add_argument('--fot', type=int, default=None, help='Fix the number of out
 parser.add_argument('--seed', type=int, default=None, help='Pass a value to fix the seed for RNG for testing.')
 parser.add_argument('--count', type=int, default=500, help='Number of trojans to generate and add. Defaults to 500')
 parser.add_argument('--tests', type=int, default=7000, help='Number of test patterns to make. Defaults to 7000')
+parser.add_argument('--nopart', action='store_true', help='Don\'t generate partitions.')
+
 parser.add_argument('file', metavar='N', type=str, nargs='+',
                    help='circuit to generate and add trojans to')
 
@@ -30,15 +32,21 @@ args = parser.parse_args()
 for infile in args.file:
     try:
         ckt, PIs, POs = read_bench_file(infile)
-        ckt, partitions = partition_ckt(ckt, POs)
+        if not args.nopart:
+            ckt, partitions = partition_ckt(ckt, POs)
+        
         bits = randbits(seed=args.seed)
-        INPUTS=["bsc","input"]
+        INPUTS=["input"] if args.nopart else ["bsc","input"] 
         test_inputs = []
         if args.inputs is None:
-            for g in range(0,7000):
+            for g in range(0,args.tests):
                 cur_inputs = []
-                for part in partitions:
-                    input_list = list({x for x in part.members if ckt[x].function.lower() in INPUTS})
+                if not args.nopart:
+                    for part in partitions:
+                        input_list = list({x for x in part.members if ckt[x].function.lower() in INPUTS})
+                        cur_inputs.append(list(itertools.islice(bits, len(input_list))))
+                else:
+                    input_list = list({x for x in ckt if ckt[x].function.lower() in INPUTS})
                     cur_inputs.append(list(itertools.islice(bits, len(input_list))))
                 test_inputs.append(cur_inputs)
         else:
@@ -54,7 +62,7 @@ for infile in args.file:
             f = open("pyTrojan_"+path.basename(infile)+"_inputs.pickle", 'w')
             pickle.dump(test_inputs, f)
             f.close()
-        if args.partitions is None:
+        if args.partitions is None and not args.nopart:
             f = open("pyTrojan_"+path.basename(infile)+"_partitions.pickle", 'w')
             pickle.dump(partitions, f)
             f.close()

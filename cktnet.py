@@ -144,6 +144,7 @@ def read_bench_file(f):
                 g = Gate(r[0].strip())
                 g.function = r[1].strip()
                 g.fins = [ x.strip() for x in re.split(split_form, r[2].strip())]
+                print "Gate", g.name ,"fan-ins:",  g.fins
                 ckt[r[0].strip()] = g
             else:
                 print l
@@ -153,6 +154,7 @@ def read_bench_file(f):
         fots =  [ f for f in ckt.values() if k in f.fins] 
         if len(fots) > 0:
             for i in fots:
+                print "Adding ", i.name, " to fanouts of", k
                 z.fots.append(i.name)
 
     PIs = map(lambda x: x[0], PIs)
