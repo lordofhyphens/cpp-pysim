@@ -26,7 +26,7 @@ class Event(object):
     def max(self, t = None):
         if t is None:
             try:
-                return max(self.data)
+                return self.data[max(self.data)]
             except ValueError:
                 return 0
         else:
@@ -61,24 +61,31 @@ class PySim(object):
         self.current_queue = dict()
         self.current_queue[0] = set()
         self.next_queue = []
-        self.partitions = map(lambda x: x.get_inputs(), self.partitions) if self.bist else [x for x in self.ckt if self.ckt[x].function.lower() is "input"]
+        self.partitions = map(lambda x: x.get_inputs(), self.partitions) if self.bist else [[x for x in self.ckt if self.ckt[x].function.lower() == "input"]]
+        self.total_cycles = len(self.inputs)
         self.sim_cycle()
 
     def sim_cycle(self):
+        print "Getting next set of PIs"
         if self.t not in self.current_queue:
-            print "making new queue"
-            self.current_queue[next_t] = set()
+            self.current_queue[self.t] = set()
+
         z = self.inputs.pop(0)
         assignments = itertools.izip(self.partitions, z)
+        print self.partitions
         for k,v in assignments:
             for inp in zip(k,v):
+                print inp
                 self.result[inp[0]][self.t] = inp[1]
                 self.current_queue[self.t].add(inp[0])
+                print k
+        output = {x:self.result[x].max(self.t) for x in self.result if self.ckt[x].function in "TP" or len(self.ckt[x].fots) == 0}
+        output = {get_regular_po(x, ckt):y for x, y in output.iteritems()}
+        print "Outputs at time ", self.t, output
         self.cycle = self.cycle + 1
 
     def sim_next(self):
         if self.t in self.current_queue:
-            print self.t, " in queue"
             for g in self.current_queue[self.t]:
                 print "Simming", g
 
@@ -87,28 +94,39 @@ class PySim(object):
                 except TypeError:
                     next_t = self.t + 1
                 if next_t not in self.current_queue:
-                    print "making new queue"
+                    print "making new queue", next_t
                     self.current_queue[next_t] = set()
                 for fot in self.ckt[g].fots:
                     self.current_queue[next_t].add(fot)
                 self.result[g][self.t] = self.gates(g)
         self.t = self.t + 1
     def run(self):
-        while(len(self.inputs) > 0):
-            while(self.t < max(self.current_queue.iterkeys())):
+        while(self.cycle < self.total_cycles+1):
+            print "t: ", self.t
+            while(self.t <= max(self.current_queue.iterkeys())):
+                print "t: ", self.t
                 self.sim_next()
-            self.sim_cycle()
+            output = {x:self.result[x].max() for x in self.result if self.ckt[x].function in "TP" or len(self.ckt[x].fots) == 0}
+            output = {get_regular_po(x, ckt):y for x, y in output.iteritems()}
+            try:
+                self.sim_cycle()
+            except IndexError:
+                self.cycle = self.cycle+1
     def gates(self, g):
         gate = self.ckt[g]
         result = 0 # default value
+        if gate.function.upper() in {"INPUT", "BSC"}:
+            result = self.result[g].max(self.t)
+        print "Inputs:", gate.fins
         if gate.function.upper() in {"NAND", "AND"}:
-            result = all([self.result[x].max(self.t) for x in gate.fots])
+            result = all([self.result[x].max(self.t) for x in gate.fins]) 
         if gate.function.upper() in {"NOR", "OR", "NOT", "BUFF"}:
-            result = any([self.result[x].max(self.t) for x in gate.fots])
+            result = any([self.result[x].max(self.t) for x in gate.fins])
         if gate.function.upper() in {"XNOR", "XOR"}:
-            result = (([self.result[x].max(self.t) for x in gate.fots].count(1) % 2) == 1)
+            result = (([self.result[x].max(self.t) for x in gate.fins].count(1) % 2) == 1)
         if gate.function.upper() in {"NOR", "NAND", "NOT", "XNOR"}:
-            result = 1 if result is False else 1
+            result = 0 if result else 1
+        print "Gate:", gate.function.upper(), [self.result[x].max(self.t) for x in gate.fins], result
         return result
 
 parser = argparse.ArgumentParser(description='Simulate partitions from pickled representations.')
@@ -147,4 +165,5 @@ for f in args.pickled_file:
     output = {x:sim_element.result[x].max() for x in sim_element.result if sim_element.ckt[x].function in "TP" or len(sim_element.ckt[x].fots) == 0}
     output = {get_regular_po(x, ckt):y for x, y in output.iteritems()}
     print output
+    print [ckt[x].function for x in ckt]
 
