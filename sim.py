@@ -44,7 +44,10 @@ class Event(object):
                 return 0
             except KeyError:
                 return 0
-
+    def __add__(self, x):
+        """ Combine two Event objects together """
+        self.data.update(x.data)
+        return self
     def __getitem__(self, key, **args):
         if key in self.data:
             return self.data[key]
@@ -61,8 +64,11 @@ class PySim(object):
         self.partitions = partition
         self.inputs = inputs
         self.result = dict() # key: gate names from ckt; value: Event object
+        self.outputs = dict()
         for g in ckt:
             self.result[g] = Event()
+            if self.ckt[g].function.upper() in ["TP"] or len(self.ckt[g].fots) == 0:
+                self.outputs[g] = Event()
         self.cycle = 0
         self.cycles = []
         self.bist = partition is not None
@@ -81,7 +87,10 @@ class PySim(object):
             self.current_queue[self.t] = set()
         self.cycles.append(self.t)
         z = self.inputs.pop(0)
-        self.result = {x:self.result[x] for x in self.result if self.ckt[x].function.upper() in ["TP", "BSC", "INPUT"] or len(self.ckt[x].fots) == 0}
+        self.outputs = {x:(self.result[x] + self.outputs[x]) for x in self.result if self.ckt[x].function.upper() in ["TP"] or len(self.ckt[x].fots) == 0}
+        self.result = dict()
+        for g in ckt:
+            self.result[g] = Event()
         assignments = itertools.izip(self.partitions, z)
         if args.verbose > LOG.INFO:
             print self.partitions
@@ -117,7 +126,8 @@ class PySim(object):
         while(self.cycle < self.total_cycles+1):
             print "cycle: ", self.cycle
             while(self.t <= max(self.current_queue.iterkeys())):
-                print "t: ", self.t
+                if args.verbose > LOG.INFO:
+                    print "t: ", self.t
                 self.sim_next()
             try:
                 self.sim_cycle()
@@ -176,7 +186,7 @@ for f in args.pickled_file:
         to_sim = ckt if args.ff else bad_ckt
         sim_element = PySim(to_sim, test_inputs, None) if (args.parts is None) else PySim(to_sim, test_inputs, partitions)
         sim_element.run()
-        output = {x:sim_element.result[x] for x in sim_element.result if sim_element.ckt[x].function in "TP" or len(sim_element.ckt[x].fots) == 0}
+        output = sim_element.output
         if args.ff:
             z = open("results_"+f+"_ff",'w')
         else:
