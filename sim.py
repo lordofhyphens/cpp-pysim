@@ -64,6 +64,7 @@ class PySim(object):
         for g in ckt:
             self.result[g] = Event()
         self.cycle = 0
+        self.cycles = []
         self.bist = partition is not None
         self.t = 0
         self.current_queue = dict()
@@ -78,8 +79,9 @@ class PySim(object):
             print "Getting next set of PIs"
         if self.t not in self.current_queue:
             self.current_queue[self.t] = set()
-
+        self.cycles.append(self.t)
         z = self.inputs.pop(0)
+        self.result = {x:self.result[x] for x in self.result if self.ckt[x].function in "TP" or len(self.ckt[x].fots) == 0}
         assignments = itertools.izip(self.partitions, z)
         if args.verbose > LOG.INFO:
             print self.partitions
@@ -92,6 +94,7 @@ class PySim(object):
             output = {get_regular_po(x, self.ckt):y for x, y in output.iteritems()}
             print "Outputs at time ", self.t, output
         self.cycle = self.cycle + 1
+        
 
     def sim_next(self):
         if self.t in self.current_queue:
