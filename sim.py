@@ -74,7 +74,6 @@ class PySim(object):
         self.bist = partition is not None
         self.t = 0
         self.current_queue = dict()
-        self.current_queue[0] = set()
         self.next_queue = []
         self.partitions = map(lambda x: x.get_inputs(), self.partitions) if self.bist else [[x for x in self.ckt if self.ckt[x].function.lower() == "input"]]
         self.total_cycles = len(self.inputs)
@@ -83,6 +82,7 @@ class PySim(object):
     def sim_cycle(self):
         if args.verbose > LOG.INFO:
             print "Getting next set of PIs"
+        self.current_queue = dict()
         if self.t not in self.current_queue:
             self.current_queue[self.t] = set()
         self.cycles.append(self.t)
