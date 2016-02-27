@@ -2,6 +2,7 @@ from cktnet import Gate, Partition
 import argparse
 import itertools
 import re
+import copy
 try:
    import cPickle as pickle
 except ImportError:
@@ -174,9 +175,8 @@ if args.parts is not None:
     f.close()
 
 for f in args.pickled_file:
-        fi = open(f, 'r')
+    with open(f, 'r') as fi:
         packed = pickle.load(fi)
-        fi.close()
 
         ckt = packed[0]
         bad_ckt = packed[1]
@@ -185,11 +185,11 @@ for f in args.pickled_file:
         t = packed[4]
 
         to_sim = ckt if args.ff else bad_ckt
-        sim_element = PySim(to_sim, test_inputs, None) if (args.parts is None) else PySim(to_sim, test_inputs, partitions)
+        sim_element = PySim(to_sim, copy.deepcopy(test_inputs), None) if (args.parts is None) else PySim(to_sim, copy.deepcopy(test_inputs), copy.deepcopy(partitions))
         sim_element.run()
         if args.ff:
-            z = open("results_"+f+"_ff",'w')
+            outfile = open("results_"+f+"_ff",'w')
         else:
-            z = open("results_"+f,'w')
-        pickle.dump(z, sim_element.outputs)
-        z.close()
+            outfile = open("results_"+f,'w')
+        pickle.dump(sim_element.outputs, outfile)
+        outfile.close()
