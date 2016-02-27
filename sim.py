@@ -124,7 +124,8 @@ class PySim(object):
         self.t = self.t + 1
     def run(self):
         while(self.cycle < self.total_cycles+1):
-            print "cycle: ", self.cycle
+            if self.cycle % 100 == 0:
+                print "cycle: ", self.cycle
             while(self.t <= max(self.current_queue.iterkeys())):
                 if args.verbose > LOG.INFO:
                     print "t: ", self.t
