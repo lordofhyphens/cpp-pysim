@@ -48,6 +48,8 @@ class Event(object):
         """ Combine two Event objects together """
         self.data.update(x.data)
         return self
+    def filter_unused(self, t):
+        self.data = {x:self.data[x] for x in self.data if x in t}
     def __getitem__(self, key, **args):
         if key in self.data:
             return self.data[key]
@@ -64,11 +66,9 @@ class PySim(object):
         self.partitions = partition
         self.inputs = inputs
         self.result = dict() # key: gate names from ckt; value: Event object
-        self.outputs = dict()
+        self.outputs = []
         for g in ckt:
             self.result[g] = Event()
-            if self.ckt[g].function.upper() in ["TP"] or len(self.ckt[g].fots) == 0:
-                self.outputs[g] = Event()
         self.cycle = 0
         self.cycles = []
         self.bist = partition is not None
@@ -87,7 +87,7 @@ class PySim(object):
             self.current_queue[self.t] = set()
         self.cycles.append(self.t)
         z = self.inputs.pop(0)
-        self.outputs = {x:(self.result[x] + self.outputs[x]) for x in self.result if self.ckt[x].function.upper() in ["TP"] or len(self.ckt[x].fots) == 0}
+        self.outputs.append({x:self.result[x].max() for x in self.result if self.ckt[x].function.upper() in ["TP"] or len(self.ckt[x].fots) == 0})
         self.result = dict()
         for g in ckt:
             self.result[g] = Event()
