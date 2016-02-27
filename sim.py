@@ -187,10 +187,9 @@ for f in args.pickled_file:
         to_sim = ckt if args.ff else bad_ckt
         sim_element = PySim(to_sim, test_inputs, None) if (args.parts is None) else PySim(to_sim, test_inputs, partitions)
         sim_element.run()
-        output = sim_element.output
         if args.ff:
             z = open("results_"+f+"_ff",'w')
         else:
             z = open("results_"+f,'w')
-        pickle.dump(z, output)
+        pickle.dump(z, sim_element.outputs)
         z.close()
