@@ -81,7 +81,7 @@ class PySim(object):
             self.current_queue[self.t] = set()
         self.cycles.append(self.t)
         z = self.inputs.pop(0)
-        self.result = {x:self.result[x] for x in self.result if self.ckt[x].function in "TP" or len(self.ckt[x].fots) == 0}
+        self.result = {x:self.result[x] for x in self.result if self.ckt[x].function.upper() in ["TP", "BSC", "INPUT"] or len(self.ckt[x].fots) == 0}
         assignments = itertools.izip(self.partitions, z)
         if args.verbose > LOG.INFO:
             print self.partitions
