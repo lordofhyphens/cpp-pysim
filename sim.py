@@ -1,4 +1,5 @@
 from cktnet import Gate, Partition
+from sim import Event
 import argparse
 import itertools
 import re
@@ -154,42 +155,44 @@ class PySim(object):
             print "Gate:", gate.function.upper(), [self.result[x].max(self.t) for x in gate.fins], result
         return result
 
-parser = argparse.ArgumentParser(description='Simulate partitions from pickled representations.')
+if __name__ == '__main__':
 
-parser.add_argument('--ff', action='store_true', help='Output fault-free response')
-parser.add_argument('--parts', type=str, default=None, help='Partition pickle')
-parser.add_argument('--verbose', type=str, default=0, help='Verbosity level, defaults to 0')
-parser.add_argument('tests', type=str, help='Test input pickle')
-parser.add_argument('pickled_file', metavar='N', type=str, nargs='+',
-                   help='pickled files')
+    parser = argparse.ArgumentParser(description='Simulate partitions from pickled representations.')
 
-args=parser.parse_args()
-f = open(args.tests, 'r')
-test_inputs = pickle.load(f)
-f.close()
-print args.ff
+    parser.add_argument('--ff', action='store_true', help='Output fault-free response')
+    parser.add_argument('--parts', type=str, default=None, help='Partition pickle')
+    parser.add_argument('--verbose', type=str, default=0, help='Verbosity level, defaults to 0')
+    parser.add_argument('tests', type=str, help='Test input pickle')
+    parser.add_argument('pickled_file', metavar='N', type=str, nargs='+',
+                       help='pickled files')
 
-if args.parts is not None:
-    f = open(args.parts, 'r')
-    partitions = pickle.load(f)
+    args=parser.parse_args()
+    f = open(args.tests, 'r')
+    test_inputs = pickle.load(f)
     f.close()
+    print args.ff
 
-for f in args.pickled_file:
-    with open(f, 'r') as fi:
-        packed = pickle.load(fi)
+    if args.parts is not None:
+        f = open(args.parts, 'r')
+        partitions = pickle.load(f)
+        f.close()
 
-        ckt = packed[0]
-        bad_ckt = packed[1]
-        PIs = packed[2]
-        POs = packed[3]
-        t = packed[4]
+    for f in args.pickled_file:
+        with open(f, 'r') as fi:
+            packed = pickle.load(fi)
 
-        to_sim = ckt if args.ff else bad_ckt
-        sim_element = PySim(to_sim, copy.deepcopy(test_inputs), None) if (args.parts is None) else PySim(to_sim, copy.deepcopy(test_inputs), copy.deepcopy(partitions))
-        sim_element.run()
-        if args.ff:
-            outfile = open("results_"+f+"_ff",'w')
-        else:
-            outfile = open("results_"+f,'w')
-        pickle.dump(sim_element.outputs, outfile)
-        outfile.close()
+            ckt = packed[0]
+            bad_ckt = packed[1]
+            PIs = packed[2]
+            POs = packed[3]
+            t = packed[4]
+
+            to_sim = ckt if args.ff else bad_ckt
+            sim_element = PySim(to_sim, copy.deepcopy(test_inputs), None) if (args.parts is None) else PySim(to_sim, copy.deepcopy(test_inputs), copy.deepcopy(partitions))
+            sim_element.run()
+            if args.ff:
+                outfile = open("results_"+f+"_ff",'w')
+            else:
+                outfile = open("results_"+f,'w')
+            pickle.dump(sim_element.outputs, outfile)
+            outfile.close()
