@@ -1,6 +1,7 @@
 # Code to insert trojan into circuit
 from cktnet import Gate
 import random
+import copy
 
 # random trojan ckt pattern: N(3-7) inputs, M (1-3) output
 # randomly build hierarchy of gates corresponding to number of inputs
@@ -28,6 +29,21 @@ class Trojan(object):
         self.generate()
     def __getitem__(self, index):
         return self.gates[index]
+
+    def load(self, netlist):
+        """ Copy a netlist and transform it into a Trojan circuit. """
+        self.gates = copy.deepcopy(netlist)
+        self.inputs = len([k for (k,v) in self.gates.iteritems() if v.function is "INPUT"])
+        self.outputs = len([x for x in self.gates if len(self.gates[x].fots) == 0])
+
+        for g in self.gates:
+            if self.gates[g].function is "INPUT":
+                for z in self.gates[g].fots:
+                    self.gates[z].fins = [x for x in self.gates[z].fins if self.gates[x] is not g]
+                    self.gates[z].fins.append("DUMMY");
+            self.gates[g].name = self.name+"_"+self.gates[g].name
+        self.gates = {k:v for (k,v) in self.gates.iteritems() if v.function is not "INPUT"}
+
     def generate(self):
         """ Randomly generate a circuit netlist from a choice of gates. 
             Rules: Each gate has a single fan-out.

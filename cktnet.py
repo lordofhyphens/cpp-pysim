@@ -12,6 +12,7 @@ class Gate(object):
         self.fots = []
         self.bscs = []
         self.tps = [] # test points
+        self.gateid = 0
         self.delay = 1
     def __str__(self):
         return self.name + ": " + str(self.function) + ", " + str(self.fins) + "," + str(self.fots)
@@ -88,6 +89,7 @@ class sort_topological(object):
       """ Initializes the object with a circuit description""" 
       self.unplaced = list(ckt)
       self.ckt = ckt
+      self.ids = 0
    def __next__(self):
       return self.next()
    def __iter__(self):
@@ -100,6 +102,8 @@ class sort_topological(object):
          result = map(lambda x: x not in self.unplaced, self.ckt[g].fins)
          if len(result) == 0 or all(result):
             self.unplaced.remove(g)
+            self.ckt[g].cktid = self.ids
+            self.ids = self.ids + 1
             return g
          i = i + 1
          if i >= len(self.unplaced):
@@ -121,8 +125,6 @@ def read_bench_file(f):
     placed = []
     POs = []
     PIs = []
-    BSCs = []
-    partitions = []
     with open(f, 'r') as infile:
         for l in infile:
             if re.match(comment_form, l) is not None:

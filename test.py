@@ -14,23 +14,29 @@ def randbits(seed=None):
     random.seed(seed)
     while True:
         yield random.randint(0,1)
-
 parser = argparse.ArgumentParser(description='Implant random Trojans into benchmark circuits.')
+rand_group = parser.add_argument_group(title="Random Trojan Options", description=None) 
+fixed_group = parser.add_argument_group(title="Fixed Trojan Options", description=None) 
 parser.add_argument('--inputs', type=str, default=None, help='Override the test inputs (useful for reusing partitions).')
 parser.add_argument('--partitions', type=str, default=None, help='Override the test inputs (useful for reusing partitions).')
-parser.add_argument('--fin', type=int, default=None, help='Fix the number of inputs for trojans.')
-parser.add_argument('--fot', type=int, default=None, help='Fix the number of output for trojans.')
+rand_group.add_argument('--fin', type=int, default=None, help='Fix the number of inputs for trojans.')
+rand_group.add_argument('--fot', type=int, default=None, help='Fix the number of output for trojans.')
 parser.add_argument('--seed', type=int, default=None, help='Pass a value to fix the seed for RNG for testing.')
-parser.add_argument('--count', type=int, default=500, help='Number of trojans to generate and add. Defaults to 500')
+rand_group.add_argument('--count', type=int, default=500, help='Number of trojans to generate and add. Defaults to 500')
 parser.add_argument('--tests', type=int, default=7000, help='Number of test patterns to make. Defaults to 7000')
 parser.add_argument('--nopart', action='store_true', help='Don\'t generate partitions.')
+fixed_group.add_argument('-tc', type=str, default=None, help="Use a random file from these arguments as the trojan instead of generating")
 
 parser.add_argument('file', metavar='N', type=str, nargs='+',
                    help='circuit to generate and add trojans to')
 
 args = parser.parse_args()
+print args.tc
 for infile in args.file:
-    try:
+        if args.tc is not None:
+            static_trojan = Trojan()
+            tckt, tPIs, tPOs = read_bench_file(args.tc)
+            static_trojan.load(tckt)
         ckt, PIs, POs = read_bench_file(infile)
         if not args.nopart:
             ckt, partitions = partition_ckt(ckt, POs)
@@ -67,11 +73,12 @@ for infile in args.file:
             pickle.dump(partitions, f)
             f.close()
         for i in range(0,args.count):
-            t = Trojan(fin = args.fin, fot = args.fot, seed = args.seed)
+            if args.tc is not None:
+                t = copy.deepcopy(static_trojan)
+            else:
+                t = Trojan(fin = args.fin, fot = args.fot, seed = args.seed)
             bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
             test_ckt = [ckt, bad_ckt, PIs, POs, t]
             f = open("pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+".pickle", 'w')
             pickle.dump(test_ckt, f)
             f.close()
-    except Exception, e:
-        print "Something went wrong: ", str(e)
