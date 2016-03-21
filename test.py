@@ -1,5 +1,5 @@
 from trojan import Trojan, parasite
-from cktnet import read_bench_file, partition_ckt
+from cktnet import read_bench_file, partition_ckt, write_bench_file
 import copy
 import argparse
 import random
@@ -18,6 +18,7 @@ parser = argparse.ArgumentParser(description='Implant random Trojans into benchm
 rand_group = parser.add_argument_group(title="Random Trojan Options", description=None) 
 fixed_group = parser.add_argument_group(title="Fixed Trojan Options", description=None) 
 parser.add_argument('--inputs', type=str, default=None, help='Override the test inputs (useful for reusing partitions).')
+parser.add_argument('--outdir', type=str, default=None, help='Specify an output dir.')
 parser.add_argument('--partitions', type=str, default=None, help='Override the test inputs (useful for reusing partitions).')
 rand_group.add_argument('--fin', type=int, default=None, help='Fix the number of inputs for trojans.')
 rand_group.add_argument('--fot', type=int, default=None, help='Fix the number of output for trojans.')
@@ -41,19 +42,14 @@ for infile in args.file:
         if not args.nopart:
             ckt, partitions = partition_ckt(ckt, POs)
         
-        bits = randbits(seed=args.seed)
-        INPUTS=["input"] if args.nopart else ["bsc","input"] 
+        INPUTS=["bsc","input"] 
         test_inputs = []
         if args.inputs is None:
             for g in range(0,args.tests):
                 cur_inputs = []
-                if not args.nopart:
-                    for part in partitions:
-                        input_list = list({x for x in part.members if ckt[x].function.lower() in INPUTS})
-                        cur_inputs.append(list(itertools.islice(bits, len(input_list))))
-                else:
-                    input_list = list({x for x in ckt if ckt[x].function.lower() in INPUTS})
-                    cur_inputs.append(list(itertools.islice(bits, len(input_list))))
+                input_list = list({x for x in ckt if ckt[x].function.lower() in INPUTS})
+                cur_inputs = ({k: int(random.random() > 0.5) for k in input_list})
+                print "INPUT LIST", input_list
                 test_inputs.append(cur_inputs)
         else:
             f = open(args.inputs)
@@ -62,23 +58,27 @@ for infile in args.file:
             ckt = packed[0]
             PIs = packed[2]
             POs = packed[3]
-            
-
+        if args.outdir is None:
+            outdir = ""
+        else:
+            outdir = args.outdir + "/"
         if args.inputs is None:
-            f = open("pyTrojan_"+path.basename(infile)+"_inputs.pickle", 'w')
+            f = open(outdir+"input/"+"pyTrojan_"+path.basename(infile)+"_inputs.pickle", 'w')
             pickle.dump(test_inputs, f)
             f.close()
         if args.partitions is None and not args.nopart:
-            f = open("pyTrojan_"+path.basename(infile)+"_partitions.pickle", 'w')
+            f = open(outdir+"part/"+"pyTrojan_"+path.basename(infile)+"_partitions.pickle", 'w')
             pickle.dump(partitions, f)
             f.close()
+        write_bench_file(outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"-ckt.bench",ckt)
         for i in range(0,args.count):
             if args.tc is not None:
                 t = copy.deepcopy(static_trojan)
             else:
                 t = Trojan(fin = args.fin, fot = args.fot, seed = args.seed)
             bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
+            write_bench_file(outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench",bad_ckt)
             test_ckt = [ckt, bad_ckt, PIs, POs, t]
-            f = open("pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+".pickle", 'w')
+            f = open(outdir+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+".pickle", 'w')
             pickle.dump(test_ckt, f)
             f.close()

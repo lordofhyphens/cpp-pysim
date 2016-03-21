@@ -113,15 +113,34 @@ class sort_topological(object):
 def grow_partition(ckt, g, size, w):
     gate = ckt[g]
 
+def write_bench_file(f, ckt): 
+    output_queue = dict()
+    output_queue[0] = [] # inputs
+    output_queue[1] = [] # outputs 
+    output_queue[2] = [] # test points
+    output_queue[9] = [] # other
+    with open(f, 'w') as outfile:
+        for k, g in ckt.iteritems():
+            if g.name == "DUMMY":
+                continue
+            if g.function.upper() == "INPUT": 
+                output_queue[0].append("INPUT(" + k + ")\n")
+            else:
+                output_queue[9].append(k + " = " + g.function.lower() + "(" + re.sub('[\[\'\]]', '', str(g.fins)) + ")\n")
+            if len(g.fots) == 0 and g.function.upper() != "TEST_POINT":
+                output_queue[1].append("OUTPUT("+ k + ")\n")
+        for k, q in output_queue.iteritems():
+            for i in q:
+                outfile.write(i)
+            outfile.write("\n")
+
 def read_bench_file(f):
     in_form = re.compile("INPUT\((.*)\)")
     out_form = re.compile("OUTPUT\((.*)\)")
     comment_form = re.compile("^#")
     gate_form = re.compile("(.*)[ ]*=[ ]*(.*)\((.*)\)")
     split_form = re.compile(",")
-    fins = dict()
     ckt = dict()
-    free = []
     placed = []
     POs = []
     PIs = []
@@ -148,8 +167,19 @@ def read_bench_file(f):
                 g.fins = [ x.strip() for x in re.split(split_form, r[2].strip())]
                 print "Gate", g.name ,"fan-ins:",  g.fins
                 ckt[r[0].strip()] = g
+                try:
+                    for fins in g.fins:
+                        ckt[fins].fots.append(g.name)
+                except KeyError:
+                    pass
             else:
                 print l
+    print "Checking that fanouts are present"
+    for k, g in ckt.iteritems():
+        for fin in g.fins:
+            print fin
+            if k not in ckt[fin].fots:
+                ckt[fin].fots.append(k)
 
 # add all gates that have this as a fanin to this gate's fanout list
     for k,z in ckt.items():
@@ -169,7 +199,7 @@ def partition_ckt(ckt, POs):
     unplaced = [x for x in sorted_ckt if x not in POs]
 
     parts = []
-    max_w = 20
+    max_w = 5
     for po in POs:
        p = Partition(ckt=ckt, initial_frontier=[po], available=unplaced, max_w = max_w)   
        l = [po]
@@ -204,12 +234,19 @@ def partition_ckt(ckt, POs):
     tps = gen_test_points()
     for p in parts:
        for g in p.frontier:
+          new_finset = ckt[g].fins
           for fin in ckt[g].fins:
              new_bsc = bscs.next()
              new_bsc.fots.append(g)
              ckt[new_bsc.name] = new_bsc
+             ckt[new_bsc.name].fins.append(fin)
+             ckt[new_bsc.name].fots.append(g)
              ckt[g].bscs.append(new_bsc.name)
              p.members.append(new_bsc.name)
+             new_finset = [x for x in new_finset if x is not fin]
+             new_finset.append(new_bsc.name)
+          ckt[g].fins = new_finset
+          
        new_tp = tps.next()
        new_tp.fins.append(p.members[0])
        ckt[new_tp.name] = new_tp

@@ -35,14 +35,18 @@ class Trojan(object):
         self.gates = copy.deepcopy(netlist)
         self.inputs = len([k for (k,v) in self.gates.iteritems() if v.function is "INPUT"])
         self.outputs = len([x for x in self.gates if len(self.gates[x].fots) == 0])
-
-        for g in self.gates:
-            if self.gates[g].function is "INPUT":
-                for z in self.gates[g].fots:
-                    self.gates[z].fins = [x for x in self.gates[z].fins if self.gates[x] is not g]
-                    self.gates[z].fins.append("DUMMY");
-            self.gates[g].name = self.name+"_"+self.gates[g].name
-        self.gates = {k:v for (k,v) in self.gates.iteritems() if v.function is not "INPUT"}
+        temp = dict()
+        for k,v in self.gates.iteritems():
+            k = self.name+"_"+k
+            v.fins = [self.name+"_"+x for x in v.fins]
+            v.fots = [self.name+"_"+x for x in v.fots]
+            print k
+            if v.function.upper() == "INPUT":
+                v.function = "buff"
+                v.fins.append("DUMMY");
+            v.name = self.name+"_"+v.name
+            temp[k] = v
+        self.gates = temp
 
     def generate(self):
         """ Randomly generate a circuit netlist from a choice of gates. 
@@ -94,24 +98,49 @@ class Trojan(object):
                 self.gates[i].fots.append(g.name)
     def __str__(self):
         return str([str(self.gates[x]) for x in (self.gates)])
+def get_fanin_cone(ckt, gate):
+    fin_cone = set()
+    frontier = ckt[gate].fins
+    while len(frontier) > 0:
+        next_frontier = []
+        for z in frontier:
+            fin_cone = fin_cone | set(z)
+            next_frontier = next_frontier + ckt[z].fins
+        frontier = next_frontier
+    return fin_cone
 
 def parasite(ckt, pos, trojan, seed = None):
     """ modify a ckt to randomly insert another circuit into it. Returns the modified circuit. """ 
+    for k,g in trojan.gates.iteritems():
+        print str(g)
     attach_points = [x for x in trojan.gates if "DUMMY" in trojan.gates[x].fins]
     random.seed(seed)
+    pickups = []
+    print "Attach points", attach_points
     for g in attach_points:
         attachgates = []
         for i in [x for x in trojan.gates[g].fins if x is "DUMMY"]:
-            attachgates.append(random.choice([x for x in ckt if ckt[x].function.upper() not in Trojan._gate_enum and len(ckt[x].fots) > 0]))
+            z = random.choice([x for x in ckt if ckt[x].function.upper() not in Trojan._gate_enum and len(ckt[x].fots) > 0])
+            attachgates.append(z)
+            pickups = pickups + attachgates
+            print "adding ", str(z), "to", str(g)
+            ckt[z].fots.append(g)
         trojan.gates[g].fins = trojan.gates[g].fins + attachgates
         trojan.gates[g].fins = [x for x in trojan.gates[g].fins if x is not "DUMMY"]
+    # get the fan-in cones of all of the attach points
+    disallowed = set()
+    for g in pickups:
+        disallowed = disallowed | get_fanin_cone(ckt, g)
+    allowed = list(set(ckt) | disallowed)
     for g in [x for x in trojan.gates if None in trojan.gates[x].fots]:
-        victim = random.choice(pos)
-        pos = [x for x in pos if x is not victim]
-        pos.append(g)
+        victim = random.choice(allowed)
+        allowed = [x for x in allowed if x is not victim]
+        tmpfots = ckt[victim].fots
+        ckt[victim].fots = g
         trojan.gates[g].fins.append(victim)
         trojan.gates[g].fins = [x for x in trojan.gates[g].fins if x is not None]
-        trojan.gates[g].fots = [x for x in trojan.gates[g].fots if x is not None]
+        trojan.gates[g].fots = [x for x in trojan.gates[g].fots + tmpfots if x is not None]
+
     for g in [x for x in trojan.gates if x is not "DUMMY"]:
         ckt[g] = trojan.gates[g]
 
