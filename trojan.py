@@ -111,35 +111,34 @@ def get_fanin_cone(ckt, gate):
 
 def parasite(ckt, pos, trojan, seed = None):
     """ modify a ckt to randomly insert another circuit into it. Returns the modified circuit. """ 
-    for k,g in trojan.gates.iteritems():
-        print str(g)
     attach_points = [x for x in trojan.gates if "DUMMY" in trojan.gates[x].fins]
     random.seed(seed)
     pickups = []
     print "Attach points", attach_points
     for g in attach_points:
         attachgates = []
-        for i in [x for x in trojan.gates[g].fins if x is "DUMMY"]:
+        for i in [x for x in trojan.gates[g].fins if x in "DUMMY"]:
             z = random.choice([x for x in ckt if ckt[x].function.upper() not in Trojan._gate_enum and len(ckt[x].fots) > 0])
             attachgates.append(z)
             pickups = pickups + attachgates
             print "adding ", str(z), "to", str(g)
             ckt[z].fots.append(g)
         trojan.gates[g].fins = trojan.gates[g].fins + attachgates
-        trojan.gates[g].fins = [x for x in trojan.gates[g].fins if x is not "DUMMY"]
+        trojan.gates[g].fins = [x for x in trojan.gates[g].fins if x != "DUMMY"]
     # get the fan-in cones of all of the attach points
     disallowed = set()
+    troj_out = [x for x,v in trojan.gates.iteritems() if len(v.fots) == 0 or "DUMMY" in v.fots]
     for g in pickups:
         disallowed = disallowed | get_fanin_cone(ckt, g)
-    allowed = list(set(ckt) | disallowed)
-    for g in [x for x in trojan.gates if None in trojan.gates[x].fots]:
+    inputs = set([x for x,v in ckt.iteritems() if v.function.upper() in ["BSC", "INPUT", "TEST_POINT"]])
+    allowed = list(set(ckt) - (disallowed | inputs))
+    print "Allowed;",allowed
+    for g in troj_out:
         victim = random.choice(allowed)
+        print "Target gate:", g , "->", victim
         allowed = [x for x in allowed if x is not victim]
-        tmpfots = ckt[victim].fots
-        ckt[victim].fots = g
-        trojan.gates[g].fins.append(victim)
-        trojan.gates[g].fins = [x for x in trojan.gates[g].fins if x is not None]
-        trojan.gates[g].fots = [x for x in trojan.gates[g].fots + tmpfots if x is not None]
+        ckt[victim].fins = g
+        trojan.gates[g].fots.append(victim)
 
     for g in [x for x in trojan.gates if x is not "DUMMY"]:
         ckt[g] = trojan.gates[g]
