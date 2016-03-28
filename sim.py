@@ -114,7 +114,8 @@ class PySim(object):
                 self.result[k][self.t] = v
                 self.current_queue[self.t].add(k)
             except KeyError:
-                print "ID not in ckt"
+                if args.verbose >= LOG.WARN:
+                    print "ID not in ckt"
         self.cycle = self.cycle + 1
         self.timeout = len(self.ckt)
         
@@ -150,7 +151,11 @@ class PySim(object):
                 self.sim_next()
                 self.timeout = self.timeout - 1
             if self.timeout <= 0:
-                print "Timeout reached, cycles present"
+                if args.verbose >= LOG.WARN:
+                    print "Timeout reached, cycles present"
+
+            if args.verbose > LOG.INFO:
+                print "cycle: ", self.cycle
             try:
                 self.sim_cycle()
             except IndexError:
