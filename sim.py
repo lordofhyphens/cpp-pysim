@@ -17,8 +17,6 @@ class LOG(object):
 
 
 def get_regular_po(gate, ckt):
-    if args.verbose > LOG.DEBUG:
-        print gate
     a = re.search("__TrojCkt", gate)
     if a is not None:
         for k in ckt[gate].fins:
@@ -69,7 +67,6 @@ class PySim(object):
         self.inputs = inputs
         self.result = dict() # key: gate names from ckt; value: Event object
         self.outputs = []
-        print "Initializing result dict;"
         for g in ckt:
             self.result[g] = Event()
         self.cycle = 0
@@ -95,28 +92,19 @@ class PySim(object):
             self.result[g] = Event()
 
     def sim_cycle(self):
-        if args.verbose > LOG.INFO:
-            print "Getting next set of PIs"
         self.current_queue = dict()
         if self.t not in self.current_queue:
             self.current_queue[self.t] = set()
         self.cycles.append(self.t)
         z = self.inputs.pop(0)
         self.outputs.append({x:self.result[x].max() for x in self.result if self.ckt[x].function.upper() in ["TEST_POINT"] or len(self.ckt[x].fots) == 0})
-        if args.verbose > LOG.INFO:
-            output = {x:self.result[x].max(self.t) for x in self.result if self.ckt[x].function in "TEST_POINT" or len(self.ckt[x].fots) == 0}
-            output = {get_regular_po(x, self.ckt):y for x, y in output.iteritems()}
-            print "Outputs at time ", self.t, output
         self.__reinit_results()
-        if args.verbose > LOG.INFO:
-            print self.partitions
         for k, v in z.iteritems():
             try:
                 self.result[k][self.t] = v
                 self.current_queue[self.t].add(k)
             except KeyError:
-                if args.verbose >= LOG.WARN:
-                    print "ID not in ckt"
+                print "ID not in ckt"
         self.cycle = self.cycle + 1
         self.timeout = len(self.ckt)
         
@@ -124,16 +112,11 @@ class PySim(object):
     def sim_next(self):
         if self.t in self.current_queue:
             for g in self.current_queue[self.t]:
-                if args.verbose > LOG.DEBUG:
-                    print "Simming", g
-                    print "Gate:", str(g)
                 try:
                     next_t = self.ckt[g].delay + self.t
                 except TypeError:
                     next_t = self.t + 1
                 if next_t not in self.current_queue:
-                    if args.verbose > LOG.INFO:
-                        print "making new queue", next_t
                     self.current_queue[next_t] = set()
                 for fot in self.ckt[g].fots:
                     self.current_queue[next_t].add(fot)
@@ -144,26 +127,18 @@ class PySim(object):
     def run(self):
         self.timeout = len(self.ckt)
         while(self.cycle < self.total_cycles+1):
-            if self.cycle % 100 == 0:
-                print "cycle: ", self.cycle
             while(self.t <= max(self.current_queue.iterkeys()) and self.timeout > 0):
-                if args.verbose > LOG.INFO:
-                    print "t: ", self.t
                 self.sim_next()
                 self.timeout = self.timeout - 1
             if self.timeout <= 0:
-                if args.verbose >= LOG.WARN:
-                    print "Timeout reached, cycles present"
+                print "Timeout reached, cycles present"
 
-            if args.verbose > LOG.INFO:
-                print "cycle: ", self.cycle
             try:
                 self.sim_cycle()
             except IndexError:
                 self.cycle = self.cycle+1
     def gates(self, g):
         gate = self.ckt[g]
-        print "Processing", g, gate.function
         result = 0 # default value
         if gate.function.upper() in {"INPUT", "BSC"}:
             if self.bist or gate.function.upper() in {"INPUT"}:
@@ -178,12 +153,9 @@ class PySim(object):
             result = (([self.result[x].max(self.t) for x in gate.fins].count(1) % 2) == 1)
         if gate.function.upper() in {"NOR", "NAND", "NOT", "XNOR"}:
             result = 0 if result else 1
-        if args.verbose > LOG.DEBUG:
-            print "Gate:", gate.function.upper(), [self.result[x].max(self.t) for x in gate.fins], result
         return result
 
 def start_(f, args, test_inputs, partitions):
-    print "Testing ckt", f
     with open(f, 'r') as fi:
         if args.b:
             ckt, PIs, POs = read_bench_file(args.ckt)
@@ -202,19 +174,11 @@ def start_(f, args, test_inputs, partitions):
                 print k,str(g)
         sim_element = PySim(to_sim, copy.deepcopy(test_inputs), None, cycles=args.cycles, bist=args.bist) if (args.parts is None) else PySim(to_sim, copy.deepcopy(test_inputs), copy.deepcopy(partitions), cycles=args.cycles, bist=args.bist)
         sim_element.run()
-        if args.cycles is not None:
-            for k in test_inputs[0:args.cycles]:
-                print k
-        else:
-            print test_inputs
         f = re.sub("bench/","", f)
         if args.ff:
             outfile = open("results_"+f+"_ff",'w')
         else:
             outfile = open("results_"+f,'w')
-        if args.verbose > LOG.DEBUG:
-            for k in sim_element.outputs[1:len(sim_element.outputs)]:
-                print k
         pickle.dump(sim_element.outputs, outfile)
         outfile.close()
 
@@ -249,5 +213,7 @@ if __name__ == '__main__':
     pool = Pool(processes=8)  
     for f in args.pickled_file:
         pool.apply_async(start_, (f,args,test_inputs, partitions))
+    pool.close()
+    pool.join()
 
 
