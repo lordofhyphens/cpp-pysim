@@ -3,6 +3,7 @@ import argparse
 import itertools
 import re
 import copy
+from multiprocessing import Pool, TimeoutError
 try:
    import cPickle as pickle
 except ImportError:
@@ -181,6 +182,43 @@ class PySim(object):
             print "Gate:", gate.function.upper(), [self.result[x].max(self.t) for x in gate.fins], result
         return result
 
+def start_(f, args, test_inputs, partitions):
+    print "Testing ckt", f
+    with open(f, 'r') as fi:
+        if args.b:
+            ckt, PIs, POs = read_bench_file(args.ckt)
+            bad_ckt, bad_PIs, bad_POs = read_bench_file(f)
+        else:
+            packed = pickle.load(fi)
+
+            ckt = packed[0]
+            bad_ckt = packed[1]
+            PIs = packed[2]
+            POs = packed[3]
+
+        to_sim = ckt if args.ff else bad_ckt
+        if args.verbose > LOG.DEBUG:
+            for k,g in to_sim.iteritems():
+                print k,str(g)
+        sim_element = PySim(to_sim, copy.deepcopy(test_inputs), None, cycles=args.cycles, bist=args.bist) if (args.parts is None) else PySim(to_sim, copy.deepcopy(test_inputs), copy.deepcopy(partitions), cycles=args.cycles, bist=args.bist)
+        sim_element.run()
+        if args.cycles is not None:
+            for k in test_inputs[0:args.cycles]:
+                print k
+        else:
+            print test_inputs
+        f = re.sub("bench/","", f)
+        if args.ff:
+            outfile = open("results_"+f+"_ff",'w')
+        else:
+            outfile = open("results_"+f,'w')
+        if args.verbose > LOG.DEBUG:
+            for k in sim_element.outputs[1:len(sim_element.outputs)]:
+                print k
+        pickle.dump(sim_element.outputs, outfile)
+        outfile.close()
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Simulate partitions from pickled representations.')
@@ -206,39 +244,10 @@ if __name__ == '__main__':
         f = open(args.parts, 'r')
         partitions = pickle.load(f)
         f.close()
-
+    else:
+        partitions = None
+    pool = Pool(processes=8)  
     for f in args.pickled_file:
-        print "Testing ckt", f
-        with open(f, 'r') as fi:
-            if args.b:
-                ckt, PIs, POs = read_bench_file(args.ckt)
-                bad_ckt, bad_PIs, bad_POs = read_bench_file(f)
-            else:
-                packed = pickle.load(fi)
+        pool.apply_async(start_, (f,args,test_inputs, partitions))
 
-                ckt = packed[0]
-                bad_ckt = packed[1]
-                PIs = packed[2]
-                POs = packed[3]
 
-            to_sim = ckt if args.ff else bad_ckt
-            if args.verbose > LOG.DEBUG:
-                for k,g in to_sim.iteritems():
-                    print k,str(g)
-            sim_element = PySim(to_sim, copy.deepcopy(test_inputs), None, cycles=args.cycles, bist=args.bist) if (args.parts is None) else PySim(to_sim, copy.deepcopy(test_inputs), copy.deepcopy(partitions), cycles=args.cycles, bist=args.bist)
-            sim_element.run()
-            if args.cycles is not None:
-                for k in test_inputs[0:args.cycles]:
-                    print k
-            else:
-                print test_inputs
-            f = re.sub("bench/","", f)
-            if args.ff:
-                outfile = open("results_"+f+"_ff",'w')
-            else:
-                outfile = open("results_"+f,'w')
-            if args.verbose > LOG.DEBUG:
-                for k in sim_element.outputs[1:len(sim_element.outputs)]:
-                    print k
-            pickle.dump(sim_element.outputs, outfile)
-            outfile.close()
