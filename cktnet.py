@@ -5,8 +5,8 @@ import random
 
 class Gate(object):
     _delay = {"AND": 5, "OR": 5, "INPUT": 0}
-    def __init__(self, name):
-        self.function = None
+    def __init__(self, name, function = None):
+        self.function = function
         self.name = name
         self.fins = []
         self.fots = []
@@ -177,7 +177,8 @@ def read_bench_file(f):
     print "Checking that fanouts are present"
     for k, g in ckt.iteritems():
         for fin in g.fins:
-            print fin
+            print k, fin
+            
             if k not in ckt[fin].fots:
                 ckt[fin].fots.append(k)
 

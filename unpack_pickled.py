@@ -11,8 +11,11 @@ except ImportError:
 def check_array(results_array, ff_array, mapping):
     for f,ff in izip(results_array, ff_array):
         for k in ff:
-            if bool(ff[k]) != bool(f[mapping[k]]):
-                return False
+            try:
+                if bool(ff[k]) != bool(f[mapping[k]]):
+                    return False
+            except Exception:
+                pass
     return True
 
 parser = argparse.ArgumentParser(description='Simulate partitions from pickled representations.')

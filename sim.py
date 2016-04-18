@@ -139,20 +139,30 @@ class PySim(object):
                 self.cycle = self.cycle+1
     def gates(self, g):
         gate = self.ckt[g]
+        gate.function = gate.function.upper()
         result = 0 # default value
-        if gate.function.upper() in {"INPUT", "BSC"}:
-            if self.bist or gate.function.upper() in {"INPUT"}:
+        if gate.function == "INPUT":
+            result = self.result[g].max(self.t)
+        elif gate.function == "BSC":
+            if self.bist:
                 result = self.result[g].max(self.t)
             else:
                 result = self.result[gate.fins[0]].max(self.t)
-        if gate.function.upper() in {"NAND", "AND"}:
+        elif gate.function == "NAND":
             result = int(all([self.result[x].max(self.t) for x in gate.fins])) 
-        if gate.function.upper() in {"NOR", "OR", "NOT", "BUFF", "TEST_POINT"}:
-            result = int(any([self.result[x].max(self.t) for x in gate.fins]))
-        if gate.function.upper() in {"XNOR", "XOR"}:
-            result = (([self.result[x].max(self.t) for x in gate.fins].count(1) % 2) == 1)
-        if gate.function.upper() in {"NOR", "NAND", "NOT", "XNOR"}:
             result = 0 if result else 1
+        elif gate.function == "AND":
+            result = int(all([self.result[x].max(self.t) for x in gate.fins])) 
+        elif gate.function == "NOR" or gate.function == "NOT":
+            result = int(any([self.result[x].max(self.t) for x in gate.fins]))
+            result = 0 if result else 1
+        elif gate.function == "OR" or gate.function == "BUFF" or gate.function == "TEST_POINT":
+            result = int(any([self.result[x].max(self.t) for x in gate.fins]))
+        elif gate.function == "XNOR":
+            result = (([self.result[x].max(self.t) for x in gate.fins].count(1) % 2) == 1)
+            result = 0 if result else 1
+        elif gate.function == "XOR":
+            result = (([self.result[x].max(self.t) for x in gate.fins].count(1) % 2) == 1)
         return result
 
 def start_(f, args, test_inputs, partitions):
@@ -169,6 +179,7 @@ def start_(f, args, test_inputs, partitions):
             POs = packed[3]
 
         to_sim = ckt if args.ff else bad_ckt
+        print args.verbose, LOG.DEBUG
         if args.verbose > LOG.DEBUG:
             for k,g in to_sim.iteritems():
                 print k,str(g)
@@ -210,8 +221,9 @@ if __name__ == '__main__':
         f.close()
     else:
         partitions = None
-    pool = Pool(processes=8)  
+    pool = Pool(processes=4)  
     for f in args.pickled_file:
+#        start_(f, args, test_inputs, partitions)
         pool.apply_async(start_, (f,args,test_inputs, partitions))
     pool.close()
     pool.join()

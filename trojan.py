@@ -104,8 +104,12 @@ def get_fanin_cone(ckt, gate):
     while len(frontier) > 0:
         next_frontier = []
         for z in frontier:
+
             fin_cone = fin_cone | set(z)
             next_frontier = next_frontier + ckt[z].fins
+        if next_frontier <= frontier:
+            print "frontier isn't any different, aborting."
+            return fin_cone
         frontier = next_frontier
     return fin_cone
 
@@ -118,7 +122,7 @@ def parasite(ckt, pos, trojan, seed = None):
     for g in attach_points:
         attachgates = []
         for i in [x for x in trojan.gates[g].fins if x in "DUMMY"]:
-            z = random.choice([x for x in ckt if ckt[x].function.upper() not in Trojan._gate_enum and len(ckt[x].fots) > 0])
+            z = random.choice([x for x in ckt if ckt[x].function.upper() in Trojan._gate_enum and len(ckt[x].fots) > 0])
             attachgates.append(z)
             pickups = pickups + attachgates
             print "adding ", str(z), "to", str(g)
@@ -131,6 +135,7 @@ def parasite(ckt, pos, trojan, seed = None):
     for g in pickups:
         disallowed = disallowed | get_fanin_cone(ckt, g)
     inputs = set([x for x,v in ckt.iteritems() if v.function.upper() in ["BSC", "INPUT", "TEST_POINT"]])
+    print inputs
     allowed = list(set(ckt) - (disallowed | inputs))
     print "Allowed;",allowed
     for g in troj_out:
