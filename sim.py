@@ -1,4 +1,5 @@
 from cktnet import Gate, Partition, read_bench_file
+import EventSim
 import argparse
 import itertools
 import re
@@ -164,6 +165,37 @@ class PySim(object):
         elif gate.function == "XOR":
             result = (([self.result[x].max(self.t) for x in gate.fins].count(1) % 2) == 1)
         return result
+
+class CppPySim(PySim):
+    adapt = {
+        "AND": EventSim.Gate.gate_t_AND,
+        "NAND": EventSim.Gate.gate_t_NAND,
+        "OR": EventSim.Gate.gate_t_OR,
+        "NOR": EventSim.Gate.gate_t_NOR,
+        "XOR": EventSim.Gate.gate_t_XOR,
+        "XNOR": EventSim.Gate.gate_t_XNOR,
+        "BUFF": EventSim.Gate.gate_t_BUFF,
+        "NOT": EventSim.Gate.gate_t_NOT,
+        "OUTPUT": EventSim.Gate.gate_t_OUTPUT,
+        "DUMMY": EventSim.Gate.gate_t_DUMMY,
+        "BSC": EventSim.Gate.gate_t_BSC,
+        "TEST_POINT": EventSim.Gate.gate_t_TP
+        }
+    def __init__(self, ckt, inputs, partition = None, cycles = None, bist = None):
+        """ instantiate the EventSim """
+        bist = True if bist is not None else False
+        self.sim = EventSim.EventSim()
+        for k, v in ckt.iteritems():
+            # convert to Gate objects
+            g = EventSim.Gate(CppPySim.adapt[v.function.upper()], v.name, set(v.fins), set(v.fots), v.delay, len(v.fots) == 0, len(v.fots) == 0 and v.function.upper() != "TEST_POINT")
+            self.sim.add_gate(g)
+        for k, v in inputs.iteritems():
+            for g, i in v.iteritems():
+                self.sim.add_to_inputs(k,g,i)
+    def run(self):
+        self.sim.run()
+
+
 
 def start_(f, args, test_inputs, partitions):
     with open(f, 'r') as fi:
