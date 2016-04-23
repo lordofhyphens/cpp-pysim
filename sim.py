@@ -168,32 +168,43 @@ class PySim(object):
 
 class CppPySim(PySim):
     adapt = {
-        "AND": EventSim.Gate.gate_t_AND,
-        "NAND": EventSim.Gate.gate_t_NAND,
-        "OR": EventSim.Gate.gate_t_OR,
-        "NOR": EventSim.Gate.gate_t_NOR,
-        "XOR": EventSim.Gate.gate_t_XOR,
-        "XNOR": EventSim.Gate.gate_t_XNOR,
-        "BUFF": EventSim.Gate.gate_t_BUFF,
-        "NOT": EventSim.Gate.gate_t_NOT,
-        "OUTPUT": EventSim.Gate.gate_t_OUTPUT,
-        "DUMMY": EventSim.Gate.gate_t_DUMMY,
-        "BSC": EventSim.Gate.gate_t_BSC,
-        "TEST_POINT": EventSim.Gate.gate_t_TP
+        "AND": EventSim.gate_t_AND,
+        "NAND": EventSim.gate_t_NAND,
+        "OR": EventSim.gate_t_OR,
+        "NOR": EventSim.gate_t_NOR,
+        "XOR": EventSim.gate_t_XOR,
+        "XNOR": EventSim.gate_t_XNOR,
+        "BUFF": EventSim.gate_t_BUFF,
+        "NOT": EventSim.gate_t_NOT,
+        "OUTPUT": EventSim.gate_t_OUTPUT,
+        "DUMMY": EventSim.gate_t_DUMMY,
+        "BSC": EventSim.gate_t_BSC,
+        "TEST_POINT": EventSim.gate_t_TP,
+        "INPUT" : EventSim.gate_t_INPUT
         }
     def __init__(self, ckt, inputs, partition = None, cycles = None, bist = None):
         """ instantiate the EventSim """
         bist = True if bist is not None else False
-        self.sim = EventSim.EventSim()
+        self.ckt = ckt
+        self.sim = EventSim.EventSim(int(args.verbose))
+        self.sim.bist = bist
+        self.outputs = []
+        self.inputs = inputs
         for k, v in ckt.iteritems():
             # convert to Gate objects
-            g = EventSim.Gate(CppPySim.adapt[v.function.upper()], v.name, set(v.fins), set(v.fots), v.delay, len(v.fots) == 0, len(v.fots) == 0 and v.function.upper() != "TEST_POINT")
+            f1 = EventSim.StringVector(list(set(v.fins)))
+            f2 = EventSim.StringVector(list(set(v.fots)))
+            g = EventSim.Gate(CppPySim.adapt[v.function.upper()], v.name, f1, f2, v.delay, len(v.fots) == 0, (len(v.fots) == 0 and v.function.upper() != "TEST_POINT"))
             self.sim.add_gate(g)
-        for k, v in inputs.iteritems():
+        k = 0
+        for v in inputs:
             for g, i in v.iteritems():
-                self.sim.add_to_inputs(k,g,i)
+                self.sim.add_to_inputs(k,g,bool(i))
+            k = k + 1
     def run(self):
         self.sim.run()
+    def dump(self, filename):
+        self.sim.dump_results(str(filename))
 
 
 
@@ -215,15 +226,14 @@ def start_(f, args, test_inputs, partitions):
         if args.verbose > LOG.DEBUG:
             for k,g in to_sim.iteritems():
                 print k,str(g)
-        sim_element = PySim(to_sim, copy.deepcopy(test_inputs), None, cycles=args.cycles, bist=args.bist) if (args.parts is None) else PySim(to_sim, copy.deepcopy(test_inputs), copy.deepcopy(partitions), cycles=args.cycles, bist=args.bist)
+        sim_element = CppPySim(to_sim, copy.deepcopy(test_inputs), None, cycles=args.cycles, bist=args.bist) if (args.parts is None) else PySim(to_sim, copy.deepcopy(test_inputs), copy.deepcopy(partitions), cycles=args.cycles, bist=args.bist)
         sim_element.run()
         f = re.sub("bench/","", f)
         if args.ff:
-            outfile = open("results_"+f+"_ff",'w')
+            sim_element.dump("results_"+f+"_ff")
         else:
-            outfile = open("results_"+f,'w')
-        pickle.dump(sim_element.outputs, outfile)
-        outfile.close()
+            sim_element.dump("results_"+f)
+        print "Finished ", f
 
 
 if __name__ == '__main__':
@@ -244,6 +254,8 @@ if __name__ == '__main__':
     args=parser.parse_args()
     f = open(args.tests, 'r')
     test_inputs = pickle.load(f)
+    if args.cycles is not None:
+        test_inputs = test_inputs[:args.cycles]
     f.close()
     print args.ff
 
@@ -253,11 +265,11 @@ if __name__ == '__main__':
         f.close()
     else:
         partitions = None
-    pool = Pool(processes=4)  
+#    pool = Pool(processes=4)  
     for f in args.pickled_file:
-#        start_(f, args, test_inputs, partitions)
-        pool.apply_async(start_, (f,args,test_inputs, partitions))
-    pool.close()
-    pool.join()
+        start_(f, args, test_inputs, partitions)
+#        pool.apply_async(start_, (f,args,test_inputs, partitions))
+#    pool.close()
+#    pool.join()
 
 

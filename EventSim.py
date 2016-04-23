@@ -154,28 +154,511 @@ class SwigPyIterator(_object):
 SwigPyIterator_swigregister = _EventSim.SwigPyIterator_swigregister
 SwigPyIterator_swigregister(SwigPyIterator)
 
+class StringVector(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, StringVector, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, StringVector, name)
+    __repr__ = _swig_repr
+
+    def iterator(self):
+        return _EventSim.StringVector_iterator(self)
+    def __iter__(self):
+        return self.iterator()
+
+    def __nonzero__(self):
+        return _EventSim.StringVector___nonzero__(self)
+
+    def __bool__(self):
+        return _EventSim.StringVector___bool__(self)
+
+    def __len__(self):
+        return _EventSim.StringVector___len__(self)
+
+    def __getslice__(self, i, j):
+        return _EventSim.StringVector___getslice__(self, i, j)
+
+    def __setslice__(self, *args):
+        return _EventSim.StringVector___setslice__(self, *args)
+
+    def __delslice__(self, i, j):
+        return _EventSim.StringVector___delslice__(self, i, j)
+
+    def __delitem__(self, *args):
+        return _EventSim.StringVector___delitem__(self, *args)
+
+    def __getitem__(self, *args):
+        return _EventSim.StringVector___getitem__(self, *args)
+
+    def __setitem__(self, *args):
+        return _EventSim.StringVector___setitem__(self, *args)
+
+    def pop(self):
+        return _EventSim.StringVector_pop(self)
+
+    def append(self, x):
+        return _EventSim.StringVector_append(self, x)
+
+    def empty(self):
+        return _EventSim.StringVector_empty(self)
+
+    def size(self):
+        return _EventSim.StringVector_size(self)
+
+    def swap(self, v):
+        return _EventSim.StringVector_swap(self, v)
+
+    def begin(self):
+        return _EventSim.StringVector_begin(self)
+
+    def end(self):
+        return _EventSim.StringVector_end(self)
+
+    def rbegin(self):
+        return _EventSim.StringVector_rbegin(self)
+
+    def rend(self):
+        return _EventSim.StringVector_rend(self)
+
+    def clear(self):
+        return _EventSim.StringVector_clear(self)
+
+    def get_allocator(self):
+        return _EventSim.StringVector_get_allocator(self)
+
+    def pop_back(self):
+        return _EventSim.StringVector_pop_back(self)
+
+    def erase(self, *args):
+        return _EventSim.StringVector_erase(self, *args)
+
+    def __init__(self, *args):
+        this = _EventSim.new_StringVector(*args)
+        try:
+            self.this.append(this)
+        except Exception:
+            self.this = this
+
+    def push_back(self, x):
+        return _EventSim.StringVector_push_back(self, x)
+
+    def front(self):
+        return _EventSim.StringVector_front(self)
+
+    def back(self):
+        return _EventSim.StringVector_back(self)
+
+    def assign(self, n, x):
+        return _EventSim.StringVector_assign(self, n, x)
+
+    def resize(self, *args):
+        return _EventSim.StringVector_resize(self, *args)
+
+    def insert(self, *args):
+        return _EventSim.StringVector_insert(self, *args)
+
+    def reserve(self, n):
+        return _EventSim.StringVector_reserve(self, n)
+
+    def capacity(self):
+        return _EventSim.StringVector_capacity(self)
+    __swig_destroy__ = _EventSim.delete_StringVector
+    __del__ = lambda self: None
+StringVector_swigregister = _EventSim.StringVector_swigregister
+StringVector_swigregister(StringVector)
+
+class UintVector(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, UintVector, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, UintVector, name)
+    __repr__ = _swig_repr
+
+    def iterator(self):
+        return _EventSim.UintVector_iterator(self)
+    def __iter__(self):
+        return self.iterator()
+
+    def __nonzero__(self):
+        return _EventSim.UintVector___nonzero__(self)
+
+    def __bool__(self):
+        return _EventSim.UintVector___bool__(self)
+
+    def __len__(self):
+        return _EventSim.UintVector___len__(self)
+
+    def __getslice__(self, i, j):
+        return _EventSim.UintVector___getslice__(self, i, j)
+
+    def __setslice__(self, *args):
+        return _EventSim.UintVector___setslice__(self, *args)
+
+    def __delslice__(self, i, j):
+        return _EventSim.UintVector___delslice__(self, i, j)
+
+    def __delitem__(self, *args):
+        return _EventSim.UintVector___delitem__(self, *args)
+
+    def __getitem__(self, *args):
+        return _EventSim.UintVector___getitem__(self, *args)
+
+    def __setitem__(self, *args):
+        return _EventSim.UintVector___setitem__(self, *args)
+
+    def pop(self):
+        return _EventSim.UintVector_pop(self)
+
+    def append(self, x):
+        return _EventSim.UintVector_append(self, x)
+
+    def empty(self):
+        return _EventSim.UintVector_empty(self)
+
+    def size(self):
+        return _EventSim.UintVector_size(self)
+
+    def swap(self, v):
+        return _EventSim.UintVector_swap(self, v)
+
+    def begin(self):
+        return _EventSim.UintVector_begin(self)
+
+    def end(self):
+        return _EventSim.UintVector_end(self)
+
+    def rbegin(self):
+        return _EventSim.UintVector_rbegin(self)
+
+    def rend(self):
+        return _EventSim.UintVector_rend(self)
+
+    def clear(self):
+        return _EventSim.UintVector_clear(self)
+
+    def get_allocator(self):
+        return _EventSim.UintVector_get_allocator(self)
+
+    def pop_back(self):
+        return _EventSim.UintVector_pop_back(self)
+
+    def erase(self, *args):
+        return _EventSim.UintVector_erase(self, *args)
+
+    def __init__(self, *args):
+        this = _EventSim.new_UintVector(*args)
+        try:
+            self.this.append(this)
+        except Exception:
+            self.this = this
+
+    def push_back(self, x):
+        return _EventSim.UintVector_push_back(self, x)
+
+    def front(self):
+        return _EventSim.UintVector_front(self)
+
+    def back(self):
+        return _EventSim.UintVector_back(self)
+
+    def assign(self, n, x):
+        return _EventSim.UintVector_assign(self, n, x)
+
+    def resize(self, *args):
+        return _EventSim.UintVector_resize(self, *args)
+
+    def insert(self, *args):
+        return _EventSim.UintVector_insert(self, *args)
+
+    def reserve(self, n):
+        return _EventSim.UintVector_reserve(self, n)
+
+    def capacity(self):
+        return _EventSim.UintVector_capacity(self)
+    __swig_destroy__ = _EventSim.delete_UintVector
+    __del__ = lambda self: None
+UintVector_swigregister = _EventSim.UintVector_swigregister
+UintVector_swigregister(UintVector)
+
+class ResultMap(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, ResultMap, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, ResultMap, name)
+    __repr__ = _swig_repr
+
+    def iterator(self):
+        return _EventSim.ResultMap_iterator(self)
+    def __iter__(self):
+        return self.iterator()
+
+    def __nonzero__(self):
+        return _EventSim.ResultMap___nonzero__(self)
+
+    def __bool__(self):
+        return _EventSim.ResultMap___bool__(self)
+
+    def __len__(self):
+        return _EventSim.ResultMap___len__(self)
+    def __iter__(self):
+        return self.key_iterator()
+    def iterkeys(self):
+        return self.key_iterator()
+    def itervalues(self):
+        return self.value_iterator()
+    def iteritems(self):
+        return self.iterator()
+
+    def __getitem__(self, key):
+        return _EventSim.ResultMap___getitem__(self, key)
+
+    def __delitem__(self, key):
+        return _EventSim.ResultMap___delitem__(self, key)
+
+    def has_key(self, key):
+        return _EventSim.ResultMap_has_key(self, key)
+
+    def keys(self):
+        return _EventSim.ResultMap_keys(self)
+
+    def values(self):
+        return _EventSim.ResultMap_values(self)
+
+    def items(self):
+        return _EventSim.ResultMap_items(self)
+
+    def __contains__(self, key):
+        return _EventSim.ResultMap___contains__(self, key)
+
+    def key_iterator(self):
+        return _EventSim.ResultMap_key_iterator(self)
+
+    def value_iterator(self):
+        return _EventSim.ResultMap_value_iterator(self)
+
+    def __setitem__(self, *args):
+        return _EventSim.ResultMap___setitem__(self, *args)
+
+    def asdict(self):
+        return _EventSim.ResultMap_asdict(self)
+
+    def __init__(self, *args):
+        this = _EventSim.new_ResultMap(*args)
+        try:
+            self.this.append(this)
+        except Exception:
+            self.this = this
+
+    def empty(self):
+        return _EventSim.ResultMap_empty(self)
+
+    def size(self):
+        return _EventSim.ResultMap_size(self)
+
+    def swap(self, v):
+        return _EventSim.ResultMap_swap(self, v)
+
+    def begin(self):
+        return _EventSim.ResultMap_begin(self)
+
+    def end(self):
+        return _EventSim.ResultMap_end(self)
+
+    def rbegin(self):
+        return _EventSim.ResultMap_rbegin(self)
+
+    def rend(self):
+        return _EventSim.ResultMap_rend(self)
+
+    def clear(self):
+        return _EventSim.ResultMap_clear(self)
+
+    def get_allocator(self):
+        return _EventSim.ResultMap_get_allocator(self)
+
+    def count(self, x):
+        return _EventSim.ResultMap_count(self, x)
+
+    def erase(self, *args):
+        return _EventSim.ResultMap_erase(self, *args)
+
+    def find(self, x):
+        return _EventSim.ResultMap_find(self, x)
+
+    def lower_bound(self, x):
+        return _EventSim.ResultMap_lower_bound(self, x)
+
+    def upper_bound(self, x):
+        return _EventSim.ResultMap_upper_bound(self, x)
+    __swig_destroy__ = _EventSim.delete_ResultMap
+    __del__ = lambda self: None
+ResultMap_swigregister = _EventSim.ResultMap_swigregister
+ResultMap_swigregister(ResultMap)
+
+class ResultQueue(_object):
+    __swig_setmethods__ = {}
+    __setattr__ = lambda self, name, value: _swig_setattr(self, ResultQueue, name, value)
+    __swig_getmethods__ = {}
+    __getattr__ = lambda self, name: _swig_getattr(self, ResultQueue, name)
+    __repr__ = _swig_repr
+
+    def iterator(self):
+        return _EventSim.ResultQueue_iterator(self)
+    def __iter__(self):
+        return self.iterator()
+
+    def __nonzero__(self):
+        return _EventSim.ResultQueue___nonzero__(self)
+
+    def __bool__(self):
+        return _EventSim.ResultQueue___bool__(self)
+
+    def __len__(self):
+        return _EventSim.ResultQueue___len__(self)
+    def __iter__(self):
+        return self.key_iterator()
+    def iterkeys(self):
+        return self.key_iterator()
+    def itervalues(self):
+        return self.value_iterator()
+    def iteritems(self):
+        return self.iterator()
+
+    def __getitem__(self, key):
+        return _EventSim.ResultQueue___getitem__(self, key)
+
+    def __delitem__(self, key):
+        return _EventSim.ResultQueue___delitem__(self, key)
+
+    def has_key(self, key):
+        return _EventSim.ResultQueue_has_key(self, key)
+
+    def keys(self):
+        return _EventSim.ResultQueue_keys(self)
+
+    def values(self):
+        return _EventSim.ResultQueue_values(self)
+
+    def items(self):
+        return _EventSim.ResultQueue_items(self)
+
+    def __contains__(self, key):
+        return _EventSim.ResultQueue___contains__(self, key)
+
+    def key_iterator(self):
+        return _EventSim.ResultQueue_key_iterator(self)
+
+    def value_iterator(self):
+        return _EventSim.ResultQueue_value_iterator(self)
+
+    def __setitem__(self, *args):
+        return _EventSim.ResultQueue___setitem__(self, *args)
+
+    def asdict(self):
+        return _EventSim.ResultQueue_asdict(self)
+
+    def __init__(self, *args):
+        this = _EventSim.new_ResultQueue(*args)
+        try:
+            self.this.append(this)
+        except Exception:
+            self.this = this
+
+    def empty(self):
+        return _EventSim.ResultQueue_empty(self)
+
+    def size(self):
+        return _EventSim.ResultQueue_size(self)
+
+    def swap(self, v):
+        return _EventSim.ResultQueue_swap(self, v)
+
+    def begin(self):
+        return _EventSim.ResultQueue_begin(self)
+
+    def end(self):
+        return _EventSim.ResultQueue_end(self)
+
+    def rbegin(self):
+        return _EventSim.ResultQueue_rbegin(self)
+
+    def rend(self):
+        return _EventSim.ResultQueue_rend(self)
+
+    def clear(self):
+        return _EventSim.ResultQueue_clear(self)
+
+    def get_allocator(self):
+        return _EventSim.ResultQueue_get_allocator(self)
+
+    def count(self, x):
+        return _EventSim.ResultQueue_count(self, x)
+
+    def erase(self, *args):
+        return _EventSim.ResultQueue_erase(self, *args)
+
+    def find(self, x):
+        return _EventSim.ResultQueue_find(self, x)
+
+    def lower_bound(self, x):
+        return _EventSim.ResultQueue_lower_bound(self, x)
+
+    def upper_bound(self, x):
+        return _EventSim.ResultQueue_upper_bound(self, x)
+    __swig_destroy__ = _EventSim.delete_ResultQueue
+    __del__ = lambda self: None
+ResultQueue_swigregister = _EventSim.ResultQueue_swigregister
+ResultQueue_swigregister(ResultQueue)
+
+
+_EventSim.gate_t_BSC_swigconstant(_EventSim)
+gate_t_BSC = _EventSim.gate_t_BSC
+
+_EventSim.gate_t_TP_swigconstant(_EventSim)
+gate_t_TP = _EventSim.gate_t_TP
+
+_EventSim.gate_t_INPUT_swigconstant(_EventSim)
+gate_t_INPUT = _EventSim.gate_t_INPUT
+
+_EventSim.gate_t_AND_swigconstant(_EventSim)
+gate_t_AND = _EventSim.gate_t_AND
+
+_EventSim.gate_t_NAND_swigconstant(_EventSim)
+gate_t_NAND = _EventSim.gate_t_NAND
+
+_EventSim.gate_t_OR_swigconstant(_EventSim)
+gate_t_OR = _EventSim.gate_t_OR
+
+_EventSim.gate_t_NOR_swigconstant(_EventSim)
+gate_t_NOR = _EventSim.gate_t_NOR
+
+_EventSim.gate_t_XOR_swigconstant(_EventSim)
+gate_t_XOR = _EventSim.gate_t_XOR
+
+_EventSim.gate_t_XNOR_swigconstant(_EventSim)
+gate_t_XNOR = _EventSim.gate_t_XNOR
+
+_EventSim.gate_t_BUFF_swigconstant(_EventSim)
+gate_t_BUFF = _EventSim.gate_t_BUFF
+
+_EventSim.gate_t_NOT_swigconstant(_EventSim)
+gate_t_NOT = _EventSim.gate_t_NOT
+
+_EventSim.gate_t_OUTPUT_swigconstant(_EventSim)
+gate_t_OUTPUT = _EventSim.gate_t_OUTPUT
+
+_EventSim.gate_t_DUMMY_swigconstant(_EventSim)
+gate_t_DUMMY = _EventSim.gate_t_DUMMY
 class Gate(_object):
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, Gate, name, value)
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, Gate, name)
     __repr__ = _swig_repr
-    gate_t_BSC = _EventSim.Gate_gate_t_BSC
-    gate_t_TP = _EventSim.Gate_gate_t_TP
-    gate_t_INPUT = _EventSim.Gate_gate_t_INPUT
-    gate_t_AND = _EventSim.Gate_gate_t_AND
-    gate_t_NAND = _EventSim.Gate_gate_t_NAND
-    gate_t_OR = _EventSim.Gate_gate_t_OR
-    gate_t_NOR = _EventSim.Gate_gate_t_NOR
-    gate_t_XOR = _EventSim.Gate_gate_t_XOR
-    gate_t_XNOR = _EventSim.Gate_gate_t_XNOR
-    gate_t_BUFF = _EventSim.Gate_gate_t_BUFF
-    gate_t_NOT = _EventSim.Gate_gate_t_NOT
-    gate_t_OUTPUT = _EventSim.Gate_gate_t_OUTPUT
-    gate_t_DUMMY = _EventSim.Gate_gate_t_DUMMY
+    __swig_setmethods__["function"] = _EventSim.Gate_function_set
     __swig_getmethods__["function"] = _EventSim.Gate_function_get
     if _newclass:
-        function = _swig_property(_EventSim.Gate_function_get)
+        function = _swig_property(_EventSim.Gate_function_get, _EventSim.Gate_function_set)
     __swig_getmethods__["name"] = _EventSim.Gate_name_get
     if _newclass:
         name = _swig_property(_EventSim.Gate_name_get)
@@ -198,6 +681,10 @@ class Gate(_object):
     __swig_getmethods__["primary_output"] = _EventSim.Gate_primary_output_get
     if _newclass:
         primary_output = _swig_property(_EventSim.Gate_primary_output_get, _EventSim.Gate_primary_output_set)
+    __swig_setmethods__["verbosity"] = _EventSim.Gate_verbosity_set
+    __swig_getmethods__["verbosity"] = _EventSim.Gate_verbosity_get
+    if _newclass:
+        verbosity = _swig_property(_EventSim.Gate_verbosity_get, _EventSim.Gate_verbosity_set)
 
     def __init__(self, *args):
         this = _EventSim.new_Gate(*args)
@@ -205,6 +692,9 @@ class Gate(_object):
             self.this.append(this)
         except Exception:
             self.this = this
+
+    def debug_print(self):
+        return _EventSim.Gate_debug_print(self)
 
     def nfin(self):
         return _EventSim.Gate_nfin(self)
@@ -246,6 +736,10 @@ class EventSim(_object):
     __swig_getmethods__["events"] = _EventSim.EventSim_events_get
     if _newclass:
         events = _swig_property(_EventSim.EventSim_events_get, _EventSim.EventSim_events_set)
+    __swig_setmethods__["new_events"] = _EventSim.EventSim_new_events_set
+    __swig_getmethods__["new_events"] = _EventSim.EventSim_new_events_get
+    if _newclass:
+        new_events = _swig_property(_EventSim.EventSim_new_events_get, _EventSim.EventSim_new_events_set)
 
     def add_to_inputs(self, c, name, value):
         return _EventSim.EventSim_add_to_inputs(self, c, name, value)
@@ -256,8 +750,11 @@ class EventSim(_object):
     def run(self):
         return _EventSim.EventSim_run(self)
 
-    def __init__(self):
-        this = _EventSim.new_EventSim()
+    def dump_results(self, arg2):
+        return _EventSim.EventSim_dump_results(self, arg2)
+
+    def __init__(self, *args):
+        this = _EventSim.new_EventSim(*args)
         try:
             self.this.append(this)
         except Exception:
