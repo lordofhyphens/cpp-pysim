@@ -165,6 +165,11 @@ class PySim(object):
         elif gate.function == "XOR":
             result = (([self.result[x].max(self.t) for x in gate.fins].count(1) % 2) == 1)
         return result
+    def dump(self, filename):
+        with open(filename, 'w') as outfile:
+            for c in self.cycles:
+                pass
+
 
 class CppPySim(PySim):
     adapt = {
