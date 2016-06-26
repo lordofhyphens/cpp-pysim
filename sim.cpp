@@ -29,7 +29,7 @@ bool EventSim::get_value(string name) {
   }
   return iter->second;
 }
-void EventSim::run() {
+void EventSim::run(string filename) {
   end_sim = false;
   bool last_cycle = false;
   while (!end_sim) {
@@ -49,7 +49,9 @@ void EventSim::run() {
       c++; // update current cycle step
       if (inputs.size() == 0) last_cycle = true;
       if (t > 0) cycles.push_back(t-1);
-      }
+      dump_result(filename, c-1);
+      results.clear(); // clear the results array after we've dumped it
+    }
     if (!end_sim) {
       for_each(events[t].begin(), events[t].end(), [this](string ob) { this->process_gate(ob); });
       for (auto i = new_events.cbegin(); i != new_events.cend(); i++) {
@@ -142,6 +144,28 @@ void EventSim::add_to_inputs(size_t c, string name, bool value) {
 void EventSim::add_gate(const Gate& g) {
   ckt.insert(pair<string, Gate>(g.name, g));
 }
+void EventSim::dump_result(string filename, const unsigned int cycle) {
+  if (cycle == 0) {
+    ofstream outfile(filename);
+    outfile.close();
+    return;
+  }
+
+  ofstream outfile(filename, std::ofstream::app);
+  outfile << cycle << ",";
+  for (auto g = ckt.cbegin(); g != ckt.cend(); g++) {
+    try {
+      auto& temp = results.at(g->first);
+      outfile << g->first << "," << temp[t] << ",";
+    } catch (const out_of_range& oor) {
+      if (verbosity > 4)
+        cerr << g->first << " not in results array.\n";
+    }
+  }
+  outfile << "\n";
+  outfile.close();
+}
+
 void EventSim::dump_results(string filename) {
   ofstream outfile(filename);
   for (auto i = cycles.begin(); i != cycles.end(); i++) {

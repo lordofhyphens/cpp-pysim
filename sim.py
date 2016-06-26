@@ -157,7 +157,7 @@ class PySim(object):
         elif gate.function == "NOR" or gate.function == "NOT":
             result = int(any([self.result[x].max(self.t) for x in gate.fins]))
             result = 0 if result else 1
-        elif gate.function == "OR" or gate.function == "BUFF" or gate.function == "TEST_POINT":
+        elif gate.function == "OR" or gate.function == "BUFF" or gate.function == "BUF" or gate.function == "TEST_POINT":
             result = int(any([self.result[x].max(self.t) for x in gate.fins]))
         elif gate.function == "XNOR":
             result = (([self.result[x].max(self.t) for x in gate.fins].count(1) % 2) == 1)
@@ -180,6 +180,7 @@ class CppPySim(PySim):
         "XOR": EventSim.gate_t_XOR,
         "XNOR": EventSim.gate_t_XNOR,
         "BUFF": EventSim.gate_t_BUFF,
+        "BUF": EventSim.gate_t_BUFF,
         "NOT": EventSim.gate_t_NOT,
         "OUTPUT": EventSim.gate_t_OUTPUT,
         "DUMMY": EventSim.gate_t_DUMMY,
@@ -206,8 +207,8 @@ class CppPySim(PySim):
             for g, i in v.iteritems():
                 self.sim.add_to_inputs(k,g,bool(i))
             k = k + 1
-    def run(self):
-        self.sim.run()
+    def run(self, filename):
+        self.sim.run(filename)
     def dump(self, filename):
         self.sim.dump_results(str(filename))
 
@@ -232,12 +233,13 @@ def start_(f, args, test_inputs, partitions):
             for k,g in to_sim.iteritems():
                 print k,str(g)
         sim_element = CppPySim(to_sim, copy.deepcopy(test_inputs), None, cycles=args.cycles, bist=args.bist) if (args.parts is None) else PySim(to_sim, copy.deepcopy(test_inputs), copy.deepcopy(partitions), cycles=args.cycles, bist=args.bist)
-        sim_element.run()
         f = re.sub("bench/","", f)
+        output_name = ""
         if args.ff:
-            sim_element.dump("results_"+f+"_ff")
+            output_name = "results_"+f+"_ff"
         else:
-            sim_element.dump("results_"+f)
+            output_name = "results_"+f
+        sim_element.run(output_name)
         print "Finished ", f
 
 

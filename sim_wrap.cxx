@@ -12964,6 +12964,17 @@ SWIGINTERN PyObject *gate_t_BUFF_swigconstant(PyObject *SWIGUNUSEDPARM(self), Py
 }
 
 
+SWIGINTERN PyObject *gate_t_BUF_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *module;
+  PyObject *d;
+  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
+  d = PyModule_GetDict(module);
+  if (!d) return NULL;
+  SWIG_Python_SetConstant(d, "gate_t_BUF",SWIG_From_int(static_cast< int >(gate_t::BUF)));
+  return SWIG_Py_Void();
+}
+
+
 SWIGINTERN PyObject *gate_t_NOT_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *module;
   PyObject *d;
@@ -14198,17 +14209,28 @@ fail:
 SWIGINTERN PyObject *_wrap_EventSim_run(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   EventSim *arg1 = (EventSim *) 0 ;
+  std::string arg2 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"O:EventSim_run",&obj0)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OO:EventSim_run",&obj0,&obj1)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_EventSim, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "EventSim_run" "', argument " "1"" of type '" "EventSim *""'"); 
   }
   arg1 = reinterpret_cast< EventSim * >(argp1);
-  (arg1)->run();
+  {
+    std::string *ptr = (std::string *)0;
+    int res = SWIG_AsPtr_std_string(obj1, &ptr);
+    if (!SWIG_IsOK(res) || !ptr) {
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "EventSim_run" "', argument " "2"" of type '" "std::string""'"); 
+    }
+    arg2 = *ptr;
+    if (SWIG_IsNewObj(res)) delete ptr;
+  }
+  (arg1)->run(arg2);
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -14241,6 +14263,47 @@ SWIGINTERN PyObject *_wrap_EventSim_dump_results(PyObject *SWIGUNUSEDPARM(self),
     if (SWIG_IsNewObj(res)) delete ptr;
   }
   (arg1)->dump_results(arg2);
+  resultobj = SWIG_Py_Void();
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_EventSim_dump_result(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  EventSim *arg1 = (EventSim *) 0 ;
+  std::string arg2 ;
+  unsigned int arg3 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  unsigned int val3 ;
+  int ecode3 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOO:EventSim_dump_result",&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_EventSim, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "EventSim_dump_result" "', argument " "1"" of type '" "EventSim *""'"); 
+  }
+  arg1 = reinterpret_cast< EventSim * >(argp1);
+  {
+    std::string *ptr = (std::string *)0;
+    int res = SWIG_AsPtr_std_string(obj1, &ptr);
+    if (!SWIG_IsOK(res) || !ptr) {
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "EventSim_dump_result" "', argument " "2"" of type '" "std::string""'"); 
+    }
+    arg2 = *ptr;
+    if (SWIG_IsNewObj(res)) delete ptr;
+  }
+  ecode3 = SWIG_AsVal_unsigned_SS_int(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "EventSim_dump_result" "', argument " "3"" of type '" "unsigned int""'");
+  } 
+  arg3 = static_cast< unsigned int >(val3);
+  (arg1)->dump_result(arg2,arg3);
   resultobj = SWIG_Py_Void();
   return resultobj;
 fail:
@@ -14508,6 +14571,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"gate_t_XOR_swigconstant", gate_t_XOR_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"gate_t_XNOR_swigconstant", gate_t_XNOR_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"gate_t_BUFF_swigconstant", gate_t_BUFF_swigconstant, METH_VARARGS, NULL},
+	 { (char *)"gate_t_BUF_swigconstant", gate_t_BUF_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"gate_t_NOT_swigconstant", gate_t_NOT_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"gate_t_OUTPUT_swigconstant", gate_t_OUTPUT_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"gate_t_DUMMY_swigconstant", gate_t_DUMMY_swigconstant, METH_VARARGS, NULL},
@@ -14549,6 +14613,7 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"EventSim_add_gate", _wrap_EventSim_add_gate, METH_VARARGS, NULL},
 	 { (char *)"EventSim_run", _wrap_EventSim_run, METH_VARARGS, NULL},
 	 { (char *)"EventSim_dump_results", _wrap_EventSim_dump_results, METH_VARARGS, NULL},
+	 { (char *)"EventSim_dump_result", _wrap_EventSim_dump_result, METH_VARARGS, NULL},
 	 { (char *)"new_EventSim", _wrap_new_EventSim, METH_VARARGS, NULL},
 	 { (char *)"delete_EventSim", _wrap_delete_EventSim, METH_VARARGS, NULL},
 	 { (char *)"EventSim_swigregister", EventSim_swigregister, METH_VARARGS, NULL},

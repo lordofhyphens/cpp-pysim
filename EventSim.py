@@ -641,6 +641,9 @@ gate_t_XNOR = _EventSim.gate_t_XNOR
 _EventSim.gate_t_BUFF_swigconstant(_EventSim)
 gate_t_BUFF = _EventSim.gate_t_BUFF
 
+_EventSim.gate_t_BUF_swigconstant(_EventSim)
+gate_t_BUF = _EventSim.gate_t_BUF
+
 _EventSim.gate_t_NOT_swigconstant(_EventSim)
 gate_t_NOT = _EventSim.gate_t_NOT
 
@@ -747,11 +750,14 @@ class EventSim(_object):
     def add_gate(self, g):
         return _EventSim.EventSim_add_gate(self, g)
 
-    def run(self):
-        return _EventSim.EventSim_run(self)
+    def run(self, arg2):
+        return _EventSim.EventSim_run(self, arg2)
 
     def dump_results(self, arg2):
         return _EventSim.EventSim_dump_results(self, arg2)
+
+    def dump_result(self, arg2, arg3):
+        return _EventSim.EventSim_dump_result(self, arg2, arg3)
 
     def __init__(self, *args):
         this = _EventSim.new_EventSim(*args)

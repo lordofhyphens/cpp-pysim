@@ -87,8 +87,9 @@ class EventSim {
     map<size_t, set<string> > new_events;
     void add_to_inputs(size_t c, string name, bool value);
     void add_gate(const Gate& g);
-    void run();
+    void run(string);
     void dump_results(string);
+    void dump_result(string, const unsigned int);
     EventSim() : c(0), t(0), next_inputs(map<string, bool>()), end_sim(false), bist(false), ckt(map<string, Gate>()),
     inputs(map<size_t, map<string, bool> >()), cycles(vector<size_t>()), events(map<size_t, set<string> >()), verbosity(0)
     { }
