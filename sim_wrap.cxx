@@ -12964,17 +12964,6 @@ SWIGINTERN PyObject *gate_t_BUFF_swigconstant(PyObject *SWIGUNUSEDPARM(self), Py
 }
 
 
-SWIGINTERN PyObject *gate_t_BUF_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
-  PyObject *module;
-  PyObject *d;
-  if (!PyArg_ParseTuple(args,(char*)"O:swigconstant", &module)) return NULL;
-  d = PyModule_GetDict(module);
-  if (!d) return NULL;
-  SWIG_Python_SetConstant(d, "gate_t_BUF",SWIG_From_int(static_cast< int >(gate_t::BUF)));
-  return SWIG_Py_Void();
-}
-
-
 SWIGINTERN PyObject *gate_t_NOT_swigconstant(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *module;
   PyObject *d;
@@ -14571,7 +14560,6 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"gate_t_XOR_swigconstant", gate_t_XOR_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"gate_t_XNOR_swigconstant", gate_t_XNOR_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"gate_t_BUFF_swigconstant", gate_t_BUFF_swigconstant, METH_VARARGS, NULL},
-	 { (char *)"gate_t_BUF_swigconstant", gate_t_BUF_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"gate_t_NOT_swigconstant", gate_t_NOT_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"gate_t_OUTPUT_swigconstant", gate_t_OUTPUT_swigconstant, METH_VARARGS, NULL},
 	 { (char *)"gate_t_DUMMY_swigconstant", gate_t_DUMMY_swigconstant, METH_VARARGS, NULL},

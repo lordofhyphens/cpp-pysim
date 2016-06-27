@@ -641,9 +641,6 @@ gate_t_XNOR = _EventSim.gate_t_XNOR
 _EventSim.gate_t_BUFF_swigconstant(_EventSim)
 gate_t_BUFF = _EventSim.gate_t_BUFF
 
-_EventSim.gate_t_BUF_swigconstant(_EventSim)
-gate_t_BUF = _EventSim.gate_t_BUF
-
 _EventSim.gate_t_NOT_swigconstant(_EventSim)
 gate_t_NOT = _EventSim.gate_t_NOT
 

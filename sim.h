@@ -61,8 +61,6 @@ class Gate {
     size_t nfot() { return fanout.size(); }    
 };
 
-
-
 class EventSim {
   private:
     size_t c, t; // cycle and time references
@@ -71,6 +69,9 @@ class EventSim {
     bool get_value(string name);
     bool end_sim;
     void process_gate(const string &name);
+    bool new_file;
+    void process_events();
+    bool run_cycle(string);
   protected:
     int verbosity;
 
