@@ -186,7 +186,9 @@ class CppPySim(PySim):
         "DUMMY": EventSim.gate_t_DUMMY,
         "BSC": EventSim.gate_t_BSC,
         "TEST_POINT": EventSim.gate_t_TP,
-        "INPUT" : EventSim.gate_t_INPUT
+        "INPUT" : EventSim.gate_t_INPUT,
+        "DFF_O" : EventSim.gate_t_DFF_O,
+        "DFF" : EventSim.gate_t_DFF
         }
     def __init__(self, ckt, inputs, partition = None, cycles = None, bist = None):
         """ instantiate the EventSim """
@@ -195,13 +197,21 @@ class CppPySim(PySim):
         self.sim = EventSim.EventSim(int(args.verbose))
         self.sim.bist = bist
         self.outputs = []
-        self.inputs = inputs
+        self.inputs = inputs 
         for k, v in ckt.iteritems():
             # convert to Gate objects
             f1 = EventSim.StringVector(list(set(v.fins)))
             f2 = EventSim.StringVector(list(set(v.fots)))
-            g = EventSim.Gate(CppPySim.adapt[v.function.upper()], v.name, f1, f2, v.delay, len(v.fots) == 0, (len(v.fots) == 0 and v.function.upper() != "TEST_POINT"))
-            self.sim.add_gate(g)
+            if v.function.upper() is "DFF":
+                # Add the DFF
+                g = EventSim.Gate(CppPySim.adapt[v.function.upper()], v.name, f1, Eventsim.StringVector([]), v.delay, True, False)
+                self.sim.add_gate(g)
+                # Add the DFF_O
+                g = EventSim.Gate(CppPySim.adapt[v.function.upper()], v.name + "_O", v.name, EventSim.StringVector([]), f2, 0, False, False)
+                self.sim.add_gate(g)
+            else:
+                g = EventSim.Gate(CppPySim.adapt[v.function.upper()], v.name, f1, f2, v.delay, len(v.fots) == 0, (len(v.fots) == 0 and v.function.upper() != "TEST_POINT"))
+                self.sim.add_gate(g)
         k = 0
         for v in inputs:
             for g, i in v.iteritems():

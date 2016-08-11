@@ -95,13 +95,15 @@ class sort_topological(object):
    def __iter__(self):
       return self
    def next(self):
-      """ return a gate if and only if none of its prerequisites are in self.unplaced """
+      """ return a gate if and only if none of its prerequisites are in self.unplaced, or if it's a DFF """
       i = 0
       while len(self.unplaced) > 0:
          g = self.unplaced[i]
+         print "Considering", g, self.ckt[g].function
          result = map(lambda x: x not in self.unplaced, self.ckt[g].fins)
-         if len(result) == 0 or all(result):
+         if len(result) == 0 or all(result) or self.ckt[g].function.upper() == "DFF":
             self.unplaced.remove(g)
+            print "Removing", g
             self.ckt[g].cktid = self.ids
             self.ids = self.ids + 1
             return g
@@ -196,7 +198,9 @@ def read_bench_file(f):
     return ckt, PIs, POs
 
 def partition_ckt(ckt, POs):
+    print "Sorting ckt"
     sorted_ckt = [x for x in sort_topological(ckt)]
+    print "Sorted ckt"
     unplaced = [x for x in sorted_ckt if x not in POs]
 
     parts = []

@@ -1,5 +1,5 @@
 .PHONY: all clean
-
+SWIG=swig3.0
 all: _EventSim.so
 
 clean:
@@ -9,7 +9,7 @@ _EventSim.so: sim.o sim_wrap.o
 sim_wrap.o: sim_wrap.cxx
 	c++ -std=c++14 -c $^ -fPIC -I/usr/include/python2.7
 sim_wrap.cxx: sim.i sim.h
-	swig -python -c++ $<
+	$(SWIG) -python -c++ $<
 
 sim.o: sim.cpp sim.h
 	c++ -std=c++14 -O2 -fpermissive -c $^ -fPIC

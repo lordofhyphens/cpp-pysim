@@ -38,16 +38,21 @@ bool EventSim::run_cycle(string filename) {
   inputs.erase(c);
   for_each(next_inputs.cbegin(), next_inputs.cend(), 
       [this](const pair<string,bool> ob) { events[t].insert(ob.first); });
+  // preload any DFFs
+  for_each(dffs.cbegin(), dffs.cend(), 
+      [this](const pair<string, result_t> ob) { events[t].insert(ob.first); });
 
   // run all time steps for this cycle.
   process_events();
+  dffs.clear(); // clear out dff list to save memory.
   for_each(ckt.cbegin(), ckt.cend(), 
-      [this](const pair<string,Gate> ob) { bool temp_result = get_value(ob.first); results[ob.first][t-1] = temp_result; });
+      [this](const pair<string,Gate> ob) { bool temp_result = get_value(ob.first); results[ob.first][t-1] = temp_result; if (ob.second.function == gate_t::DFF) dffs[ob.first][t-1] = temp_result; });
   cycles.push_back(t-1);
 
   // dump output
   //for_each(results.begin(), results.end(), [this](pair<string, result_t> ob) { if (this->ckt[ob.first].fanout.size() != 0) this->results.erase(ob.first);}); // clean up non-outputs
   dump_result(filename, c);
+  // Save results to dff list.
   results.clear();
   c++;
 
@@ -96,6 +101,9 @@ void EventSim::process_gate(const string &name) {
   const auto& fins = g.fanin;
   auto result = false;
   switch (g.function) {
+    case gate_t::DFF_O:
+        result = get_value(g.dff_link); // get the newest value, if any
+        break;
     case gate_t::BSC:
       if (!bist);
         // copy the fanins to this gate if not bist, otherwise treat as an input;
@@ -113,6 +121,7 @@ void EventSim::process_gate(const string &name) {
     case gate_t::XNOR:
       result = (count_if(fins.begin(), fins.end(), [this](string ob) { return get_value(ob); }) % 2) == 1;
     case gate_t::OR:
+    case gate_t::DFF: // treat DFF inputs like buffers
     case gate_t::NOR:
     case gate_t::BUFF:
     case gate_t::NOT:

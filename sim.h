@@ -22,6 +22,8 @@ enum class gate_t : unsigned int
   BUFF = 9,
   NOT = 10,
   OUTPUT = 11,
+  DFF_O = 12,
+  DFF = 13,
   DUMMY = 255
 };
 // simple representation of gate in a netlist.
@@ -30,6 +32,7 @@ class Gate {
 
     gate_t function;
     const string name;
+    string dff_link;
     const unsigned int delay;
     vector<string> fanin, fanout;
     bool output;
@@ -43,13 +46,17 @@ class Gate {
       fanout(fanout), output(isoutput), primary_output(ispo), verbosity(0) {}
     Gate(gate_t func, string name, vector<string> fanin, vector<string> fanout, unsigned int delay, bool isoutput, bool ispo) : 
       delay(delay), function(func), name(name), fanin(fanin),
-      fanout(fanout), output(isoutput), primary_output(ispo), verbosity(0) {}
+      fanout(fanout), output(isoutput), primary_output(ispo), verbosity(0), dff_link(""){}
+
+    Gate(gate_t func, string name, string link, vector<string> fanin, vector<string> fanout, unsigned int delay, bool isoutput, bool ispo) : 
+      delay(delay), function(func), name(name), fanin(fanin),
+      fanout(fanout), output(isoutput), primary_output(ispo), verbosity(0), dff_link(link) {}
 
     Gate& operator=(const Gate& other) {
       *this = Gate(other);
     }
     Gate(const Gate& other) : delay(other.delay), function(other.function), name(other.name), fanin(other.fanin),
-    fanout(other.fanout), output(other.output), primary_output(other.primary_output)
+    fanout(other.fanout), output(other.output), primary_output(other.primary_output), dff_link(other.dff_link)
     { }
     void debug_print()
     {
@@ -83,6 +90,7 @@ class EventSim {
     // the input vectors 
     map<size_t, map<string, bool> > inputs;
     map<string, result_t> results; // top for any name is the newest value and the time it was at.
+    map<string, result_t> dffs; // top for any name is the newest value and the time it was at.
     vector<size_t> cycles;
     map<size_t, set<string> > events;
     map<size_t, set<string> > new_events;
