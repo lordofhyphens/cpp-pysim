@@ -747,11 +747,14 @@ class EventSim(_object):
     def add_gate(self, g):
         return _EventSim.EventSim_add_gate(self, g)
 
-    def run(self):
-        return _EventSim.EventSim_run(self)
+    def run(self, arg2):
+        return _EventSim.EventSim_run(self, arg2)
 
     def dump_results(self, arg2):
         return _EventSim.EventSim_dump_results(self, arg2)
+
+    def dump_result(self, arg2, arg3):
+        return _EventSim.EventSim_dump_result(self, arg2, arg3)
 
     def __init__(self, *args):
         this = _EventSim.new_EventSim(*args)
