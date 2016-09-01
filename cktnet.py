@@ -1,6 +1,8 @@
 #!/usr/bin/python
 import re
 import random
+from random import choice
+from operator import itemgetter
 
 
 class Gate(object):
@@ -44,44 +46,58 @@ class Partition(object):
         self.w = len(set([y for sublist in [self.ckt[x].fins for x in self.frontier if self.ckt[x].fins != []] for y in sublist]))
         self.members = self.members + self.frontier
         self.output = self.frontier # initial gates are the output.
+        if self.w > self.max_w:
+            print self.w,"initial width"
     def get_inputs(self):
         return list({x for x in self.members if self.ckt[x].function.lower() in self.INPUTS})
 
-    def grow(self, initial = None):
+    def grow(self):
         """Expand this partition out one stage, if possible"""
-        print "Attempting to grow partition from frontier of", p.frontier
-        frontier_old = self.frontier
-        old_w = self.w
-        self.frontier = list(set([y for sublist in [self.ckt[x].fins for x in self.frontier if self.ckt[x].fins != []] for y in sublist]))
-        self.w = len(set([y for sublist in [self.ckt[x].fins for x in self.frontier if self.ckt[x].fins != []] for y in sublist]))
-        if self.w > self.max_w:
-            """ randomly choose a subset of the old frontier """
-            temp_frontier = random.sample(self.frontier, len(self.frontier)-1)
-            attempt = len(set([y for sublist in [self.ckt[x].fins for x in temp_frontier if self.ckt[x].fins != []] for y in sublist]))
-            tries = 0
-            while attempt <= self.max_w and tries < 50:
-                print "Attempt", tries
-                temp_frontier = random.sample(self.frontier, len(self.frontier)-1)
-                attempt = len(set([y for sublist in [self.ckt[x].fins for x in temp_frontier if self.ckt[x].fins != []] for y in sublist]))
-                tries = tries + 1
-            if tries >= 50:
-                self.frontier = frontier_old
-                self.w = len(self.frontier)
-                raise StopIteration("can't grow any more!")
-            else:
-                self.frontier = temp_frontier
-                self.members = self.members + self.frontier
-        else:
-            self.members = self.members + self.frontier
-        # restrict to available gates
-        self.frontier = [x for x in self.frontier if x in self.available]
-        self.members = [x for x in self.members if x in self.available]
-        self.frontier = self.frontier + [x for x in self.members if ckt[x].function is "input" ]
-        self.w = len(self.frontier)
+        if len(self.frontier) == 0:
+            return None # nothing left in the frontier
+        candidates = []
+        for f in self.frontier:
+            for g in [x for x in self.ckt[f].fins if x in self.available and not x in self.members]:
+                candidates.append((g, len(self.ckt[g].fins)-1 if len(self.ckt[g].fins) > 0 else 0))
+        candidates = list(reversed(sorted(candidates, key=itemgetter(1))))
+        while len(candidates) > 0:
+            victim = candidates.pop()
+            if victim[0] in self.available:
+                self.frontier.append(victim[0])
+                self.members.append(victim[0])
+                self.available.remove(victim[0])
+                self.frontier = [x for x in self.frontier if len([y for y in self.ckt[x].fins if not y in self.members and y in self.available]) > 0] # remove frontier entries with nothing in them
+                self.w = len(set([y for sublist in [self.ckt[x].fins for x in self.frontier if self.ckt[x].fins != []] for y in sublist])) # recalculate w
+                if self.w >= self.max_w - 1:
+                    self.members.remove(victim[0])
+                    self.available.append(victim[0])
+                    self.frontier.remove(victim[0])
+                    return None
+        self.frontier = [x for x in self.frontier if len([y for y in self.ckt[x].fins if not y in self.members and y in self.available]) > 0] # remove frontier entries with nothing in them
+        return True
+
     def size(self):
         return len(self.members)
     def __str__(self):
        return str(self.members)
+
+class random_set(object):
+    """ iterator whose next() function gives a random set of inputs number until it is exhausted."""
+
+    def __init__(self, n = 0):
+        self.size = n
+        self.available = list(range(0,pow(2,n)))
+    def __next__():
+        return self.next()
+    def __iter__(self):
+        return self
+    def next(self):
+        try:
+            victim = choice(self.available)
+        except IndexError:
+            raise StopIteration
+        self.available.remove(victim)
+        return [int(x) for x in bin(victim)[2:]]
 
 class sort_topological(object):
    """ iterator whose next() function spits out the next legal gate in the ckt list for a topological sort """
@@ -111,9 +127,6 @@ class sort_topological(object):
          if i >= len(self.unplaced):
             i = 0
       raise StopIteration
-
-def grow_partition(ckt, g, size, w):
-    gate = ckt[g]
 
 def write_bench_file(f, ckt): 
     output_queue = dict()
@@ -197,41 +210,26 @@ def read_bench_file(f):
     print "Parsed ckt"
     return ckt, PIs, POs
 
-def partition_ckt(ckt, POs):
+def partition_ckt(ckt, POs, w = 5):
     print "Sorting ckt"
     sorted_ckt = [x for x in sort_topological(ckt)]
     print "Sorted ckt"
     unplaced = [x for x in sorted_ckt if x not in POs]
 
     parts = []
-    max_w = 5
     for po in POs:
-       p = Partition(ckt=ckt, initial_frontier=[po], available=unplaced, max_w = max_w)   
+       p = Partition(ckt=ckt, initial_frontier=[po], available=unplaced, max_w = w)   
        l = [po]
-       try:
-          while len(p.frontier) < max_w:
-             p.grow()
-             if l == p.frontier:
-                raise StopIteration
-             l = p.frontier
-
-       except Exception, e:
-          print "Error occurred", e
+       while p.grow() is not None:
+           pass
        parts.append(p)
        unplaced = [x for x in unplaced if x not in p.members]
 
     while len(unplaced) > 0:
        start = random.sample(unplaced, 1)
-       p = Partition(ckt=ckt, initial_frontier=start, available=unplaced, max_w = max_w)
-       l = start
-       try: 
-          while len(p.frontier) < max_w:
-             p.grow()
-             if l == p.frontier:
-                raise StopIteration
-             l = p.frontier
-       except Exception:
-          print "Error occurred", e
+       p = Partition(ckt=ckt, initial_frontier=start, available=unplaced, max_w = w)
+       while p.grow() is not None:
+           pass
        parts.append(p)
        unplaced = [x for x in unplaced if x not in p.members]
 

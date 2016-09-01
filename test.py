@@ -1,5 +1,5 @@
 from trojan import Trojan, parasite
-from cktnet import read_bench_file, partition_ckt, write_bench_file
+from cktnet import read_bench_file, partition_ckt, write_bench_file, random_set
 import copy
 import argparse
 import random
@@ -25,6 +25,10 @@ rand_group.add_argument('--fot', type=int, default=None, help='Fix the number of
 parser.add_argument('--seed', type=int, default=None, help='Pass a value to fix the seed for RNG for testing.')
 rand_group.add_argument('--count', type=int, default=500, help='Number of trojans to generate and add. Defaults to 500')
 parser.add_argument('--tests', type=int, default=7000, help='Number of test patterns to make. Defaults to 7000')
+parser.add_argument('--w', type=int, default=10, help='Partitions depend on no more than these many inputs.')
+parser.add_argument('--pe', dest='pe', action='store_true', help='Generate as many test patterns that are required to bring all inputs to the partition')
+parser.set_defaults(feature=False, trojan=True)
+parser.add_argument('--notrojan', dest='trojan', action='store_false', help="Don't add Trojans.")
 parser.add_argument('--nopart', action='store_true', help='Don\'t generate partitions.')
 fixed_group.add_argument('-tc', type=str, default=None, help="Use a random file from these arguments as the trojan instead of generating")
 
@@ -40,17 +44,36 @@ for infile in args.file:
             static_trojan.load(tckt)
         ckt, PIs, POs = read_bench_file(infile)
         if not args.nopart:
-            ckt, partitions = partition_ckt(ckt, POs)
+            ckt, partitions = partition_ckt(ckt, POs, args.w)
+            print "Size of widest partition:", max([len(x.get_inputs()) for x in partitions])
         
         INPUTS=["bsc","input"] 
         test_inputs = []
         if args.inputs is None:
-            for g in range(0,args.tests):
-                cur_inputs = []
+            if args.pe:                
+                for part in partitions:
+                    input_list = list(part.get_inputs())
+                    count = 0
+                    for r in random_set(len(input_list)):
+                        if count >= len(test_inputs):
+                            test_inputs.append(dict(zip(input_list, r)))
+                        else:
+                            test_inputs[count].update(dict(zip(input_list, r)))
+                        count = count + 1
+                # fill in holes
                 input_list = list({x for x in ckt if ckt[x].function.lower() in INPUTS})
-                cur_inputs = ({k: int(random.random() > 0.5) for k in input_list})
-                print "INPUT LIST", input_list
-                test_inputs.append(cur_inputs)
+                for k in input_list:
+                    for t in test_inputs:
+                        t.update([{k, int(random.random() > 0.5)} for k in t if not k in t])
+                print "Number of cycles:", len(test_inputs), "partitions: ", len(partitions), len(list({x for x in ckt if ckt[x].function.lower() in INPUTS})
+                )
+            else:
+                for g in range(0,args.tests):
+                    cur_inputs = []
+                    input_list = list({x for x in ckt if ckt[x].function.lower() in INPUTS})
+                    cur_inputs = ({k: int(random.random() > 0.5) for k in input_list})
+                    print "INPUT LIST", input_list
+                    test_inputs.append(cur_inputs)
         else:
             f = open(args.inputs)
             packed = pickle.load(f)
@@ -71,14 +94,15 @@ for infile in args.file:
             pickle.dump(partitions, f)
             f.close()
         write_bench_file(outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"-ckt.bench",ckt)
-        for i in range(0,args.count):
-            if args.tc is not None:
-                t = copy.deepcopy(static_trojan)
-            else:
-                t = Trojan(fin = args.fin, fot = args.fot, seed = args.seed)
-            bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
-            write_bench_file(outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench",bad_ckt)
-            test_ckt = [ckt, bad_ckt, PIs, POs, t]
-            f = open(outdir+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+".pickle", 'w')
-            pickle.dump(test_ckt, f)
-            f.close()
+        if args.trojan:
+            for i in range(0,args.count):
+                if args.tc is not None:
+                    t = copy.deepcopy(static_trojan)
+                else:
+                    t = Trojan(fin = args.fin, fot = args.fot, seed = args.seed)
+                bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
+                write_bench_file(outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench",bad_ckt)
+                test_ckt = [ckt, bad_ckt, PIs, POs, t]
+                f = open(outdir+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+".pickle", 'w')
+                pickle.dump(test_ckt, f)
+                f.close()
