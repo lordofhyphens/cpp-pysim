@@ -5,3 +5,8 @@
 *.bench
 *.so
 *.o
+results_*
+*.gz
+*.swo
+*.swn
+.~*
