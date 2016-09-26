@@ -1,0 +1,10 @@
+#!/bin/sh
+echo "Running ${1} with ${2} inserted as Trojan"
+rm -rf results_${1}_${2}-${3}_random
+mkdir -p ${1}_${2}-${3}_random/{input,part,bench} results_${1}_${2}-${3}
+
+cp partitioned/pyTrojan_s1196.bench_inputs.pickle ${1}_${2}-${3}_random/input
+cp partitioned/pyTrojan_s1196.bench-ckt.bench ${1}_${2}-${3}_random/bench
+cp partitioned/pyTrojan_s1196.bench_partitions.pickle ${1}_${2}-${3}_random/part
+
+pypy ./test_random_bscs.py --outdir ${1}_${2}-${3}_random -tc i85/${2}.bench partitioned/pyTrojan_${1}.bench-ckt.bench i89/${1}.bench
