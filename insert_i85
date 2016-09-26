@@ -1,0 +1,6 @@
+#!/bin/bash
+echo "Building ${1} with ${2} inserted as Trojan"
+rm -rf ${1}_${2} results_${1}_${2}
+mkdir -p ${1}_${2}/input ${1}_${2}/part ${1}_${2}/bench results_${1}_${2}
+
+pypy ./test.py --pe --w ${3} --outdir ${1}_${2} -tc i85/${2}.bench i85/${1}.bench >> /dev/null

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ `ls results_${1}_${2}_random/ | wc -l` -gt 450 ]; then
+  python filter.py --ckt ${1}_${2}_random/bench/pyTrojan_${1}.bench-ckt.bench results_${1}_${2}_random/*.bench results_${1}_${2}_random/*.bench_ff
+  tar -cf results_${1}_${2}.random.filtered.tar results_${1}_${2}_random/*_filtered
+  pigz results_${1}_${2}.random.filtered.tar
+  rm results_${1}_${2}/*_filtered
+fi

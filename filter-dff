@@ -1,0 +1,7 @@
+#!/bin/bash
+if [ `ls results_${1}_${2}-${3}/ | wc -l` -gt 5 ]; then
+  python filter.py --dff --ckt ${1}_${2}-${3}/bench/pyTrojan_${1}.bench-ckt.bench results_${1}_${2}-${3}/*.bench results_${1}_${2}-${3}/*.bench_ff
+  tar -cf results_${1}_${2}-${3}.dff.filtered.tar results_${1}_${2}-${3}/*_filtered
+  pigz results_${1}_${2}-${3}.dff.filtered.tar
+  rm results_${1}_${2}-${3}/*_filtered
+fi

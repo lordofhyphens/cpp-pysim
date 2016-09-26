@@ -1,0 +1,8 @@
+#!/bin/sh
+echo "Running ${1} with ${2} inserted as Trojan"
+rm -rf results_${1}_${2}-${3}_random
+mkdir -p ${1}_${2}-${3}_random/part ${1}_${2}-${3}_random/bench ${1}_${2}-${3}_random/bench results_${1}_${2}-${3} ${1}_${2}-${3}/random
+
+cp -Rp ${1}_${2}-${3}/input ${1}_${2}-${3}_random
+
+pypy ./test_random_bscs.py --outdir ${1}_${2}-${3}_random -tc i85/${2}.bench ${1}_${2}-${3}/bench/pyTrojan_${1}.bench-ckt.bench i89/${1}.bench
