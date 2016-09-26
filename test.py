@@ -30,6 +30,7 @@ parser.add_argument('--pe', dest='pe', action='store_true', help='Generate as ma
 parser.set_defaults(feature=False, trojan=True)
 parser.add_argument('--notrojan', dest='trojan', action='store_false', help="Don't add Trojans.")
 parser.add_argument('--nopart', action='store_true', help='Don\'t generate partitions.')
+parser.add_argument('--noinput', action='store_true', help='Don\'t generate inputs.')
 fixed_group.add_argument('-tc', type=str, default=None, help="Use a random file from these arguments as the trojan instead of generating")
 
 parser.add_argument('file', metavar='N', type=str, nargs='+',
@@ -46,46 +47,46 @@ for infile in args.file:
         if not args.nopart:
             ckt, partitions = partition_ckt(ckt, POs, args.w)
             print "Size of widest partition:", max([len(x.get_inputs()) for x in partitions])
-        
-        INPUTS=["bsc","input"] 
-        test_inputs = []
-        if args.inputs is None:
-            if args.pe:                
-                for part in partitions:
-                    input_list = list(part.get_inputs())
-                    count = 0
-                    for r in random_set(len(input_list)):
-                        if count >= len(test_inputs):
-                            test_inputs.append(dict(zip(input_list, r)))
-                        else:
-                            test_inputs[count].update(dict(zip(input_list, r)))
-                        count = count + 1
-                # fill in holes
-                input_list = list({x for x in ckt if ckt[x].function.lower() in INPUTS})
-                for k in input_list:
-                    for t in test_inputs:
-                        t.update([{k, int(random.random() > 0.5)} for k in t if not k in t])
-                print "Number of cycles:", len(test_inputs), "partitions: ", len(partitions), len(list({x for x in ckt if ckt[x].function.lower() in INPUTS})
-                )
-            else:
-                for g in range(0,args.tests):
-                    cur_inputs = []
+        if not args.noinput:
+            INPUTS=["bsc","input"] 
+            test_inputs = []
+            if args.inputs is None:
+                if args.pe:                
+                    for part in partitions:
+                        input_list = list(part.get_inputs())
+                        count = 0
+                        for r in random_set(len(input_list)):
+                            if count >= len(test_inputs):
+                                test_inputs.append(dict(zip(input_list, r)))
+                            else:
+                                test_inputs[count].update(dict(zip(input_list, r)))
+                            count = count + 1
+                    # fill in holes
                     input_list = list({x for x in ckt if ckt[x].function.lower() in INPUTS})
-                    cur_inputs = ({k: int(random.random() > 0.5) for k in input_list})
-                    print "INPUT LIST", input_list
-                    test_inputs.append(cur_inputs)
-        else:
-            f = open(args.inputs)
-            packed = pickle.load(f)
-            f.close()
-            ckt = packed[0]
-            PIs = packed[2]
-            POs = packed[3]
+                    for k in input_list:
+                        for t in test_inputs:
+                            t.update([{k, int(random.random() > 0.5)} for k in t if not k in t])
+                    print "Number of cycles:", len(test_inputs), "partitions: ", len(partitions), len(list({x for x in ckt if ckt[x].function.lower() in INPUTS})
+                )
+                else:
+                    for g in range(0,args.tests):
+                        cur_inputs = []
+                        input_list = list({x for x in ckt if ckt[x].function.lower() in INPUTS})
+                        cur_inputs = ({k: int(random.random() > 0.5) for k in input_list})
+                        print "INPUT LIST", input_list
+                        test_inputs.append(cur_inputs)
+            else:
+                f = open(args.inputs)
+                packed = pickle.load(f)
+                f.close()
+                ckt = packed[0]
+                PIs = packed[2]
+                POs = packed[3]
         if args.outdir is None:
             outdir = ""
         else:
             outdir = args.outdir + "/"
-        if args.inputs is None:
+        if args.inputs is None and not args.noinput:
             f = open(outdir+"input/"+"pyTrojan_"+path.basename(infile)+"_inputs.pickle", 'w')
             pickle.dump(test_inputs, f)
             f.close()

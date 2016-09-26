@@ -26,6 +26,7 @@ parser.add_argument('--seed', type=int, default=None, help='Pass a value to fix 
 rand_group.add_argument('--count', type=int, default=500, help='Number of trojans to generate and add. Defaults to 500')
 parser.add_argument('--tests', type=int, default=7000, help='Number of test patterns to make. Defaults to 7000')
 parser.add_argument('--nopart', action='store_true', help='Don\'t generate partitions.')
+parser.add_argument('--noinput', action='store_true', help='Don\'t generate inputs.')
 fixed_group.add_argument('-tc', type=str, default=None, help="Use a random file from these arguments as the trojan instead of generating")
 
 parser.add_argument('partitions', type=str, help='Override the test inputs (useful for reusing partitions).')
