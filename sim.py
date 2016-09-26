@@ -173,22 +173,22 @@ class PySim(object):
 
 class CppPySim(PySim):
     adapt = {
-        "AND": EventSim.gate_t_AND,
-        "NAND": EventSim.gate_t_NAND,
-        "OR": EventSim.gate_t_OR,
-        "NOR": EventSim.gate_t_NOR,
-        "XOR": EventSim.gate_t_XOR,
-        "XNOR": EventSim.gate_t_XNOR,
-        "BUFF": EventSim.gate_t_BUFF,
-        "BUF": EventSim.gate_t_BUFF,
-        "NOT": EventSim.gate_t_NOT,
-        "OUTPUT": EventSim.gate_t_OUTPUT,
-        "DUMMY": EventSim.gate_t_DUMMY,
-        "BSC": EventSim.gate_t_BSC,
-        "TEST_POINT": EventSim.gate_t_TP,
-        "INPUT" : EventSim.gate_t_INPUT,
-        "DFF_O" : EventSim.gate_t_DFF_O,
-        "DFF" : EventSim.gate_t_DFF
+        "AND": EventSim.AND,
+        "NAND": EventSim.NAND,
+        "OR": EventSim.OR,
+        "NOR": EventSim.NOR,
+        "XOR": EventSim.XOR,
+        "XNOR": EventSim.XNOR,
+        "BUFF": EventSim.BUFF,
+        "BUF": EventSim.BUFF,
+        "NOT": EventSim.NOT,
+        "OUTPUT": EventSim.OUTPUT,
+        "DUMMY": EventSim.DUMMY,
+        "BSC": EventSim.BSC,
+        "TEST_POINT": EventSim.TP,
+        "INPUT" : EventSim.INPUT,
+        "DFF_O" : EventSim.DFF_O,
+        "DFF" : EventSim.DFF
         }
     def __init__(self, ckt, inputs, partition = None, cycles = None, bist = None):
         """ instantiate the EventSim """
