@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import re
 import random
+import copy
 from random import choice
 from operator import itemgetter
 
@@ -258,5 +259,21 @@ def partition_ckt(ckt, POs, w = 5):
 
     return ckt, parts
 
+def get_fanin_cone(ckt, gate, stop_at = [], available = None):
+    fin_cone = set()
+    frontier = ckt[gate].fins
+    while len(frontier) > 0:
+        next_frontier = []
+        for z in frontier:
+            fin_cone = fin_cone | {z}
+            if ckt[z].function.lower() not in stop_at:
+                if available is None:
+                    next_frontier = next_frontier + ckt[z].fins
+                elif z in available:
+                    next_frontier = next_frontier + ckt[z].fins
+        if next_frontier <= frontier and len(next_frontier) <= len(frontier):
+            return fin_cone
+        frontier = next_frontier
+    return fin_cone
 if __name__ == "__main__": 
     pass

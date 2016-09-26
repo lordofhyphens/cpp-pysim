@@ -1,5 +1,5 @@
 # Code to insert trojan into circuit
-from cktnet import Gate
+from cktnet import Gate, get_fanin_cone
 import random
 import copy
 
@@ -98,20 +98,7 @@ class Trojan(object):
                 self.gates[i].fots.append(g.name)
     def __str__(self):
         return str([str(self.gates[x]) for x in (self.gates)])
-def get_fanin_cone(ckt, gate):
-    fin_cone = set()
-    frontier = ckt[gate].fins
-    while len(frontier) > 0:
-        next_frontier = []
-        for z in frontier:
 
-            fin_cone = fin_cone | set(z)
-            next_frontier = next_frontier + ckt[z].fins
-        if next_frontier <= frontier:
-            print "frontier isn't any different, aborting."
-            return fin_cone
-        frontier = next_frontier
-    return fin_cone
 
 def parasite(ckt, pos, trojan, seed = None):
     """ modify a ckt to randomly insert another circuit into it. Returns the modified circuit. """ 
@@ -142,7 +129,14 @@ def parasite(ckt, pos, trojan, seed = None):
         victim = random.choice(allowed)
         print "Target gate:", g , "->", victim
         allowed = [x for x in allowed if x is not victim]
-        ckt[victim].fins = g
+        # get the fins of the victim, pick one at random
+        tmp = ckt[victim].fins
+        victim_fin = random.choice(tmp)
+        insert_or = Gate(g+"_WIRED_OR", function="OR")
+        insert_or.fins = [victim_fin, g]
+        ckt[g+"_WIRED_OR"] = copy.deepcopy(insert_or)
+        ckt[victim].fins = [x for x in ckt[victim].fins if x is not victim_fin]
+        ckt[victim].fins.append(insert_or.name)
         trojan.gates[g].fots.append(victim)
 
     for g in [x for x in trojan.gates if x is not "DUMMY"]:
