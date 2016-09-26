@@ -58,10 +58,7 @@ for infile in args.file:
             else:
                 t = Trojan(fin = args.fin, fot = args.fot, seed = args.seed)
             bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
+            print "Dumping ckt to ", outdir+"/pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench"
             write_bench_file(outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench",bad_ckt)
             test_ckt = [ckt, bad_ckt, PIs, POs, t]
-            f = open(outdir+"/pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+".pickle", 'w')
-            print "Dumping ckt to ", outdir+"/pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+".pickle"
-            pickle.dump(test_ckt, f)
-            f.close()
         
