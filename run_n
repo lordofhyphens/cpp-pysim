@@ -1,0 +1,17 @@
+#!/bin/bash
+start=$1
+end=$2
+shift
+shift
+
+for k in $*; do 
+  for j in aoi c17; do
+    for i in $(seq $start $end); do 
+      ./rebuild ${k} $i $j;
+      ./run_rebuild ${k} $i $j; 
+      ./filter ${k} $i $j; 
+      ./filter-dff ${k} $i $j; 
+      tar -czf results_${k}_${j}-${i}.all.tar.gz results_${k}_${j}-${i}
+    done; 
+  done; 
+done
