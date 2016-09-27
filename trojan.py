@@ -2,6 +2,8 @@
 from cktnet import Gate, get_fanin_cone
 import random
 import copy
+import multiprocessing
+from functools import partial
 
 # random trojan ckt pattern: N(3-7) inputs, M (1-3) output
 # randomly build hierarchy of gates corresponding to number of inputs
@@ -116,13 +118,20 @@ def parasite(ckt, pos, trojan, seed = None):
             ckt[z].fots.append(g)
         trojan.gates[g].fins = trojan.gates[g].fins + attachgates
         trojan.gates[g].fins = [x for x in trojan.gates[g].fins if x != "DUMMY"]
+    print "going to pickups"
     # get the fan-in cones of all of the attach points
     disallowed = set()
     troj_out = [x for x,v in trojan.gates.iteritems() if len(v.fots) == 0 or "DUMMY" in v.fots]
-    for g in pickups:
-        disallowed = disallowed | get_fanin_cone(ckt, g)
+    p = multiprocessing.Pool(5)
+    partial_fanin = partial(get_fanin_cone, ckt=ckt)
+    disallowed_set = p.map(partial_fanin, pickups)
+    p.close()
+    p.join()
+    print "Reducing"
+    disallowed = reduce(lambda x,y:x | y, disallowed_set, set())
+    print "Getting inputs"
     inputs = set([x for x,v in ckt.iteritems() if v.function.upper() in ["BSC", "INPUT", "TEST_POINT"]])
-    print inputs
+    print "Getting allowed"
     allowed = list(set(ckt) - (disallowed | inputs))
     print "Allowed;",allowed
     for g in troj_out:

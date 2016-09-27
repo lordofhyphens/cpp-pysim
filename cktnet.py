@@ -259,7 +259,7 @@ def partition_ckt(ckt, POs, w = 5):
 
     return ckt, parts
 
-def get_fanin_cone(ckt, gate, stop_at = [], available = None):
+def get_fanin_cone(gate, ckt, stop_at = [], available = None):
     fin_cone = set()
     frontier = ckt[gate].fins
     while len(frontier) > 0:
@@ -271,7 +271,7 @@ def get_fanin_cone(ckt, gate, stop_at = [], available = None):
                     next_frontier = next_frontier + ckt[z].fins
                 elif z in available:
                     next_frontier = next_frontier + ckt[z].fins
-        if next_frontier <= frontier and len(next_frontier) <= len(frontier):
+        if next_frontier <= frontier:
             return fin_cone
         frontier = next_frontier
     return fin_cone
