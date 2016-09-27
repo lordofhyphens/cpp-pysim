@@ -1,17 +1,8 @@
 #!/bin/bash
-while [ $# > 0 ]; do
-  if [ $# -le 1 ]; then
-    shift
-    continue
-  fi
-  echo "Running ${1} with ${2} inserted as Trojan"
-  rm -rf results_${1}_${2}_random
-  mkdir -p ${1}_${2}_random/part ${1}_${2}_random/bench ${1}_${2}_random/bench results_${1}_${2} ${1}_${2}/random
+echo "Making random insert for ${1} with ${2} Trojan"
+rm -rf results_${1}_${2}_random
+mkdir -p ${1}_${2}_random/part ${1}_${2}_random/bench ${1}_${2}_random/bench results_${1}_${2} ${1}_${2}/random
 
-  cp -Rp ${1}_${2}/input ${1}_${2}_random
-  
-  pypy ./test_random_bscs.py --outdir ${1}_${2}_random -tc i85/${2}.bench ${1}_${2}/bench/pyTrojan_${1}.bench-ckt.bench i85/${1}.bench
+cp -Rp ${1}_${2}/input ${1}_${2}_random
 
-  shift 
-  shift
-done
+pypy ./test_random_bscs.py --outdir ${1}_${2}_random -tc i85/${2}.bench ${1}_${2}/bench/pyTrojan_${1}.bench-ckt.bench i85/${1}.bench
