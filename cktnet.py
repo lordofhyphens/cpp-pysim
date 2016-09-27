@@ -261,19 +261,19 @@ def partition_ckt(ckt, POs, w = 5):
 
 def get_fanin_cone(gate, ckt, stop_at = [], available = None):
     fin_cone = set()
-    frontier = ckt[gate].fins
+    frontier = set(ckt[gate].fins)
     while len(frontier) > 0:
-        next_frontier = []
-        for z in frontier:
-            fin_cone = fin_cone | {z}
-            if ckt[z].function.lower() not in stop_at:
-                if available is None:
-                    next_frontier = next_frontier + ckt[z].fins
-                elif z in available:
-                    next_frontier = next_frontier + ckt[z].fins
-        if next_frontier <= frontier:
-            return fin_cone
+        next_frontier = set()
+        next_frontier_tmp = map(lambda x:set(ckt[x].fins), frontier)
+        fin_cone = fin_cone | frontier
+        next_frontier = reduce(lambda x,y: x|y, next_frontier_tmp, set())
+        next_frontier = next_frontier - fin_cone
         frontier = next_frontier
+        # remove 
+        frontier = frontier - set([x for x in frontier if ckt[x].function.lower() == "input"])
+        frontier = frontier - set([x for x in frontier if ckt[x].function.lower() in stop_at])
+        if available is not None:
+            frontier = frontier - set([x for x in frontier if x not in available])
     return fin_cone
 if __name__ == "__main__": 
     pass
