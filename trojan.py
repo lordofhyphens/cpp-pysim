@@ -102,31 +102,40 @@ class Trojan(object):
         return str([str(self.gates[x]) for x in (self.gates)])
 
 
-def parasite(ckt, pos, trojan, seed = None):
+def parasite(ckt, pos, trojan, part = None, seed = None):
     """ modify a ckt to randomly insert another circuit into it. Returns the modified circuit. """ 
     restart = True
     cycles = 0
     to_attach = {}
     while restart:
         attach_points = [x for x in trojan.gates if "DUMMY" in trojan.gates[x].fins]
+        troj_out = [x for x,v in trojan.gates.iteritems() if len(v.fots) == 0 or "DUMMY" in v.fots]
+        if part is not None:
+            gates_to_use = random.choice([x for x in part if len(x.members) >= (len(attach_points) + len(troj_out))]).members
+            gates_to_use = [x for x in gates_to_use if ckt[x].function.lower() is not "test_point"]
+            partial_fanin = partial(get_fanin_cone, ckt=ckt, available=gates_to_use)
+            print "Using partition", str(gates_to_use)
+        else:
+            gates_to_use = [x for x in ckt if ckt[x].function.upper() in Trojan._gate_enum and len(ckt[x].fots) > 0]
+            partial_fanin = partial(get_fanin_cone, ckt=ckt)
         random.seed(seed)
         pickups = []
         print "Attach points", attach_points
         to_attach = {}
+        all_attach = []
         for g in attach_points:
             attachgates = []
             for i in [x for x in trojan.gates[g].fins if x in "DUMMY"]:
-                z = random.choice([x for x in ckt if ckt[x].function.upper() in Trojan._gate_enum and len(ckt[x].fots) > 0])
+                z = random.choice(gates_to_use)
                 attachgates.append(z)
+                all_attach.append(z)
                 pickups = pickups + attachgates
                 print "adding ", str(z), "to", str(g)
             to_attach[g] = attachgates
         print "going to pickups"
         # get the fan-in cones of all of the attach points
         disallowed = set()
-        troj_out = [x for x,v in trojan.gates.iteritems() if len(v.fots) == 0 or "DUMMY" in v.fots]
         p = multiprocessing.Pool(5)
-        partial_fanin = partial(get_fanin_cone, ckt=ckt)
         disallowed_set = p.map(partial_fanin, pickups)
         p.close()
         p.join()
@@ -135,7 +144,10 @@ def parasite(ckt, pos, trojan, seed = None):
         print "Getting inputs"
         inputs = set([x for x,v in ckt.iteritems() if v.function.upper() in ["BSC", "INPUT", "TEST_POINT"]])
         print "Getting allowed"
-        allowed = list(set(ckt) - (disallowed | inputs))
+        if part is not None:
+            allowed = list(set(gates_to_use) - (disallowed | inputs | set (all_attach)))
+        else:
+            allowed = list(set(ckt) - (disallowed | inputs | set(all_attach)))
         print "Allowed length;", len(allowed), len(troj_out)
         if len(allowed) < len(troj_out):
             # try again with different random gates

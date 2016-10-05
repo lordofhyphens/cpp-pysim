@@ -19,7 +19,7 @@ rand_group = parser.add_argument_group(title="Random Trojan Options", descriptio
 fixed_group = parser.add_argument_group(title="Fixed Trojan Options", description=None) 
 parser.add_argument('--inputs', type=str, default=None, help='Override the test inputs (useful for reusing partitions).')
 parser.add_argument('--outdir', type=str, default=None, help='Specify an output dir.')
-parser.add_argument('--partitions', type=str, default=None, help='Override the test inputs (useful for reusing partitions).')
+parser.add_argument('--partitions', type=str, default=None, help='Use these partitions.')
 rand_group.add_argument('--fin', type=int, default=None, help='Fix the number of inputs for trojans.')
 rand_group.add_argument('--fot', type=int, default=None, help='Fix the number of output for trojans.')
 parser.add_argument('--seed', type=int, default=None, help='Pass a value to fix the seed for RNG for testing.')
@@ -31,11 +31,12 @@ parser.set_defaults(feature=False, trojan=True)
 parser.add_argument('--notrojan', dest='trojan', action='store_false', help="Don't add Trojans.")
 parser.add_argument('--nopart', action='store_true', help='Don\'t generate partitions.')
 parser.add_argument('--noinput', action='store_true', help='Don\'t generate inputs.')
+parser.add_argument('--fullcapture', action='store_true', help="Only put Trojans inputs/outputs into the same partition")
 fixed_group.add_argument('-tc', type=str, default=None, help="Use a random file from these arguments as the trojan instead of generating")
 
 parser.add_argument('file', metavar='N', type=str, nargs='+',
                    help='circuit to generate and add trojans to')
-
+partitions = None
 args = parser.parse_args()
 print args.tc
 for infile in args.file:
@@ -101,7 +102,14 @@ for infile in args.file:
                     t = copy.deepcopy(static_trojan)
                 else:
                     t = Trojan(fin = args.fin, fot = args.fot, seed = args.seed)
-                bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
+                if args.fullcapture:
+                    if partitions is None:
+                        f = open(args.partitions, 'rb')
+                        partitions = pickle.load(f)
+                        f.close()
+                    bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t, part = partitions)
+                else:
+                    bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
                 print "Writing ", outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench"
                 write_bench_file(outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench",bad_ckt)
                 test_ckt = [ckt, bad_ckt, PIs, POs, t]
