@@ -102,17 +102,20 @@ for infile in args.file:
                     t = copy.deepcopy(static_trojan)
                 else:
                     t = Trojan(fin = args.fin, fot = args.fot, seed = args.seed)
-                if args.fullcapture:
-                    if partitions is None:
-                        f = open(args.partitions, 'rb')
-                        partitions = pickle.load(f)
-                        f.close()
-                    bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t, part = partitions)
-                else:
-                    bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
-                print "Writing ", outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench"
-                write_bench_file(outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench",bad_ckt)
-                test_ckt = [ckt, bad_ckt, PIs, POs, t]
-                f = open(outdir+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+".pickle", 'w')
-                pickle.dump(test_ckt, f)
-                f.close()
+                try: 
+                    if args.fullcapture:
+                        if partitions is None:
+                            f = open(args.partitions, 'rb')
+                            partitions = pickle.load(f)
+                            f.close()
+                        bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t, part = partitions)
+                    else:
+                        bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
+                    print "Writing ", outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench"
+                    write_bench_file(outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench",bad_ckt)
+                    test_ckt = [ckt, bad_ckt, PIs, POs, t]
+                    f = open(outdir+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+".pickle", 'w')
+                    pickle.dump(test_ckt, f)
+                    f.close()
+                except Exception:
+                    pass
