@@ -110,7 +110,7 @@ for infile in args.file:
                             f.close()
                         bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t, part = partitions)
                     else:
-                    bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
+                        bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
                     print "Writing ", outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench"
                     write_bench_file(outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench",bad_ckt)
                     test_ckt = [ckt, bad_ckt, PIs, POs, t]
