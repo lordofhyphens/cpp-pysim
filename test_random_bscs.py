@@ -53,12 +53,15 @@ for infile in args.file:
 
         write_bench_file(outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"-ckt.bench",ckt)
         for i in range(0,args.count):
-            if args.tc is not None:
-                t = copy.deepcopy(static_trojan)
-            else:
-                t = Trojan(fin = args.fin, fot = args.fot, seed = args.seed)
-            bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
-            print "Dumping ckt to ", outdir+"/pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench"
-            write_bench_file(outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench",bad_ckt)
-            test_ckt = [ckt, bad_ckt, PIs, POs, t]
+            try:
+                if args.tc is not None:
+                    t = copy.deepcopy(static_trojan)
+                else:
+                    t = Trojan(fin = args.fin, fot = args.fot, seed = args.seed)
+                bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
+                print "Dumping ckt to ", outdir+"/pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench"
+                write_bench_file(outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench",bad_ckt)
+                test_ckt = [ckt, bad_ckt, PIs, POs, t]
+            except Exception:
+                pass
         
