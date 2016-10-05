@@ -52,6 +52,14 @@ class Partition(object):
     def get_inputs(self):
         return list({x for x in self.members if self.ckt[x].function.lower() in self.INPUTS})
 
+    def update(self):
+        """
+        Update internal parameters based on the member list, in case it was modified externally.
+        """
+        self.w = len(set([y for sublist in [self.ckt[x].fins for x in self.frontier if self.ckt[x].fins != []] for y in sublist]))
+        self.output = [x for x in self.members if len(self.ckt[x].fots) == 0]
+        self.max_w = self.w
+
     def grow(self):
         """Expand this partition out one stage, if possible"""
         if len(self.frontier) == 0:
