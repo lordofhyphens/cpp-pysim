@@ -270,7 +270,7 @@ def get_fanin_cone(gate, ckt, stop_at = [], available = None):
         next_frontier = next_frontier - fin_cone
         frontier = next_frontier
         # remove 
-        frontier = frontier - set([x for x in frontier if ckt[x].function.lower() == "input"])
+        frontier = frontier - set([x for x in frontier if ckt[x].function.lower() in ["input", "dff"]])
         frontier = frontier - set([x for x in frontier if ckt[x].function.lower() in stop_at])
         if available is not None:
             frontier = frontier - set([x for x in frontier if x not in available])
