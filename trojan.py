@@ -104,36 +104,55 @@ class Trojan(object):
 
 def parasite(ckt, pos, trojan, seed = None):
     """ modify a ckt to randomly insert another circuit into it. Returns the modified circuit. """ 
-    attach_points = [x for x in trojan.gates if "DUMMY" in trojan.gates[x].fins]
-    random.seed(seed)
-    pickups = []
-    print "Attach points", attach_points
-    for g in attach_points:
-        attachgates = []
-        for i in [x for x in trojan.gates[g].fins if x in "DUMMY"]:
-            z = random.choice([x for x in ckt if ckt[x].function.upper() in Trojan._gate_enum and len(ckt[x].fots) > 0])
-            attachgates.append(z)
-            pickups = pickups + attachgates
-            print "adding ", str(z), "to", str(g)
-            ckt[z].fots.append(g)
-        trojan.gates[g].fins = trojan.gates[g].fins + attachgates
+    restart = True
+    cycles = 0
+    to_attach = {}
+    while restart:
+        attach_points = [x for x in trojan.gates if "DUMMY" in trojan.gates[x].fins]
+        random.seed(seed)
+        pickups = []
+        print "Attach points", attach_points
+        to_attach = {}
+        for g in attach_points:
+            attachgates = []
+            for i in [x for x in trojan.gates[g].fins if x in "DUMMY"]:
+                z = random.choice([x for x in ckt if ckt[x].function.upper() in Trojan._gate_enum and len(ckt[x].fots) > 0])
+                attachgates.append(z)
+                pickups = pickups + attachgates
+                print "adding ", str(z), "to", str(g)
+            to_attach[g] = attachgates
+        print "going to pickups"
+        # get the fan-in cones of all of the attach points
+        disallowed = set()
+        troj_out = [x for x,v in trojan.gates.iteritems() if len(v.fots) == 0 or "DUMMY" in v.fots]
+        p = multiprocessing.Pool(5)
+        partial_fanin = partial(get_fanin_cone, ckt=ckt)
+        disallowed_set = p.map(partial_fanin, pickups)
+        p.close()
+        p.join()
+        print "Reducing"
+        disallowed = reduce(lambda x,y:x | y, disallowed_set, set())
+        print "Getting inputs"
+        inputs = set([x for x,v in ckt.iteritems() if v.function.upper() in ["BSC", "INPUT", "TEST_POINT"]])
+        print "Getting allowed"
+        allowed = list(set(ckt) - (disallowed | inputs))
+        print "Allowed length;", len(allowed), len(troj_out)
+        if len(allowed) < len(troj_out):
+            # try again with different random gates
+            restart = True
+            cycles = cycles + 1
+            print "Attempts remaining:", str(20 - cycles)
+        else:
+            restart = False
+        if cycles > 20:
+            raise RuntimeError("Couldn't find an appropriate attachment for trojan after 20 attempts")
+    print "Found enough allowed gates to insert trojan."
+    for g, att in to_attach.iteritems():
+        trojan.gates[g].fins = trojan.gates[g].fins + att
         trojan.gates[g].fins = [x for x in trojan.gates[g].fins if x != "DUMMY"]
-    print "going to pickups"
-    # get the fan-in cones of all of the attach points
-    disallowed = set()
-    troj_out = [x for x,v in trojan.gates.iteritems() if len(v.fots) == 0 or "DUMMY" in v.fots]
-    p = multiprocessing.Pool(5)
-    partial_fanin = partial(get_fanin_cone, ckt=ckt)
-    disallowed_set = p.map(partial_fanin, pickups)
-    p.close()
-    p.join()
-    print "Reducing"
-    disallowed = reduce(lambda x,y:x | y, disallowed_set, set())
-    print "Getting inputs"
-    inputs = set([x for x,v in ckt.iteritems() if v.function.upper() in ["BSC", "INPUT", "TEST_POINT"]])
-    print "Getting allowed"
-    allowed = list(set(ckt) - (disallowed | inputs))
-    print "Allowed;",allowed
+        for z in att:
+            ckt[z].fots.append(g)
+
     for g in troj_out:
         victim = random.choice(allowed)
         print "Target gate:", g , "->", victim
@@ -147,7 +166,6 @@ def parasite(ckt, pos, trojan, seed = None):
         ckt[victim].fins = [x for x in ckt[victim].fins if x is not victim_fin]
         ckt[victim].fins.append(insert_or.name)
         trojan.gates[g].fots.append(victim)
-
     for g in [x for x in trojan.gates if x is not "DUMMY"]:
         ckt[g] = trojan.gates[g]
 
