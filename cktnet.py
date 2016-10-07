@@ -5,6 +5,8 @@ import copy
 from random import choice
 from operator import itemgetter
 
+import multiprocessing
+from functools import partial
 
 class Gate(object):
     _delay = {"AND": 5, "OR": 5, "INPUT": 0}
@@ -283,5 +285,33 @@ def get_fanin_cone(gate, ckt, stop_at = [], available = None):
         if available is not None:
             frontier = frontier - set([x for x in frontier if x not in available])
     return fin_cone
+
+def get_partitions(ckt, POs, threads=10):
+    partial_fanin = partial(get_fanin_cone, ckt=ckt, stop_at = ['bsc', 'dff'])
+    origins = [ x for x in ckt if ckt[x].function.lower() == "test_point"] + POs
+    p = multiprocessing.Pool(threads)
+    partial_partitions = p.map(partial_fanin, origins)
+    p.close()
+    p.join()
+    partitions = []
+    while len(partial_partitions) > 0:
+        overlap = False
+        s = partial_partitions.pop()
+        for p in partitions:
+            if not overlap:
+                if len(s.intersection(set(p.members))) > 0:
+                    print "Merging", s, "with", p.members
+                    print len(s.intersection(set(p.members))), "in common"
+                    overlap = True
+                    p.members = list(set(p.members) | s)
+        if not overlap:
+            # new partition object
+            print "new Partition from", s
+            p = Partition(ckt=ckt)
+            p.members = list(s)
+            partitions.append(copy.deepcopy(p))
+    partitions = map(lambda x: x.update(), partitions)
+    return partitions
+
 if __name__ == "__main__": 
     pass
