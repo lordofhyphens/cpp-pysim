@@ -1,10 +1,9 @@
 from trojan import Trojan, parasite
-from cktnet import read_bench_file, write_bench_file
+from cktnet import read_bench_file, write_bench_file, get_partitions
 from random_bsc_partition import repartition_ckt
 import copy
 import argparse
 import random
-import itertools
 import os.path as path
 try:
    import cPickle as pickle
@@ -28,6 +27,7 @@ parser.add_argument('--tests', type=int, default=7000, help='Number of test patt
 parser.add_argument('--nopart', action='store_true', help='Don\'t generate partitions.')
 parser.add_argument('--noinput', action='store_true', help='Don\'t generate inputs.')
 fixed_group.add_argument('-tc', type=str, default=None, help="Use a random file from these arguments as the trojan instead of generating")
+parser.add_argument('--fullcapture', action='store_true', help="Only put Trojans inputs/outputs into the same partition")
 
 parser.add_argument('partitions', type=str, help='Override the test inputs (useful for reusing partitions).')
 parser.add_argument('file', metavar='N', type=str, nargs='+',
@@ -58,7 +58,11 @@ for infile in args.file:
                     t = copy.deepcopy(static_trojan)
                 else:
                     t = Trojan(fin = args.fin, fot = args.fot, seed = args.seed)
-                bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
+                if args.fullcapture:
+                    partitions = get_partitions(ckt, POs)
+                    bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t, part = partitions)
+                else:
+                    bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
                 print "Dumping ckt to ", outdir+"/pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench"
                 write_bench_file(outdir+"bench/"+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+"-badckt.bench",bad_ckt)
                 test_ckt = [ckt, bad_ckt, PIs, POs, t]
