@@ -2,7 +2,7 @@
 
 if [ `ls results_${1}_${2}-${3}/ | wc -l` -gt 5 ]; then
   python filter.py --ckt ${1}_${2}-${3}/bench/pyTrojan_${1}.bench-ckt.bench results_${1}_${2}-${3}/*.bench results_${1}_${2}-${3}/*.bench_ff
-  tar -cvf results_${1}_${2}-${3}.filtered.tar results_${1}_${2}-${3}/*_filtered
-  pigz results_${1}_${2}-${3}.filtered.tar
+  tar -cvf results_${1}_${2}-${3}.${4}.${5}.filtered.tar results_${1}_${2}-${3}/*_filtered
+  pigz results_${1}_${2}-${3}.${4}.${5}.filtered.tar
   rm results_${1}_${2}-${3}/*_filtered
 fi

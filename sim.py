@@ -224,7 +224,7 @@ class CppPySim(PySim):
 
 
 
-def start_(f, args, test_inputs, partitions):
+def start_(f, args, partitions):
     with open(f, 'r') as fi:
         if args.b:
             ckt, PIs, POs = read_bench_file(args.ckt)
@@ -236,6 +236,23 @@ def start_(f, args, test_inputs, partitions):
             bad_ckt = packed[1]
             PIs = packed[2]
             POs = packed[3]
+
+        tf = open(args.tests, 'r')
+        if args.rawinputs:
+            test_inputs = []
+            line = 0
+            for l in tf:
+                test_inputs.append(dict())
+                pos = 0  
+                for g in list(set(PIs) | set([x for x in ckt.iterkeys() if ckt[x].function.lower() == "bsc"])):
+                    test_inputs[line][g] = int(l[pos])
+                    pos = pos + 1 
+                line = line + 1
+        else:
+            test_inputs = pickle.load(tf)
+        if args.cycles is not None:
+            test_inputs = test_inputs[:args.cycles]
+        tf.close()
 
         to_sim = ckt if args.ff else bad_ckt
         print args.verbose, LOG.DEBUG
@@ -265,15 +282,11 @@ if __name__ == '__main__':
     parser.add_argument('--bist', action='store_true', help="Simulate with partition support")
     parser.add_argument('--cycles', type=int, default=None, help="ckt benchmark netlist")
     parser.add_argument('tests', type=str, help='Test input pickle')
+    parser.add_argument('--rawinputs', action='store_true', help="assign to array")
     parser.add_argument('pickled_file', metavar='N', type=str, nargs='+',
                        help='pickled files')
 
     args=parser.parse_args()
-    f = open(args.tests, 'r')
-    test_inputs = pickle.load(f)
-    if args.cycles is not None:
-        test_inputs = test_inputs[:args.cycles]
-    f.close()
     print args.ff
 
     if args.parts is not None:
@@ -284,7 +297,7 @@ if __name__ == '__main__':
         partitions = None
 #    pool = Pool(processes=4)  
     for f in args.pickled_file:
-        start_(f, args, test_inputs, partitions)
+        start_(f, args, partitions)
 #        pool.apply_async(start_, (f,args,test_inputs, partitions))
 #    pool.close()
 #    pool.join()

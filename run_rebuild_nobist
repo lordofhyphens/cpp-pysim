@@ -1,0 +1,8 @@
+#!/bin/bash
+echo "Running rebuild ${1} with ${2} inserted as Trojan, batch ${3}"
+mkdir -p results_${1}_${2}-${3}
+
+python sim.py --verbose 6 --cycles ${4} --rawinputs --ff -b --ckt partitioned/pyTrojan_${1}.bench-ckt.bench partitioned/all_random_50k ${1}_${2}-${3}/bench/pyTrojan_${1}.bench-ckt.bench
+
+python sim.py --verbose 6 -b --rawinputs --cycles ${4} --ckt partitioned/pyTrojan_${1}.bench-ckt.bench partitioned/all_random_50k ${1}_${2}-${3}/bench/pyTrojan_${1}.bench_*-badckt.bench
+

@@ -1,0 +1,18 @@
+#!/bin/bash
+start=$1
+end=$2
+shift
+shift
+
+for k in $*; do 
+  for j in aoi c17; do
+    for i in $(seq $start $end); do 
+        for cycles in $(seq 10000 10000 50000 ); do
+          ./run_rebuild_nobist ${k} ${j} ${i} ${cycles}; 
+          ./filter ${k} $j ${i} nobist ${cycles}; 
+          ./filter-dff ${k} $j $i nobist ${cycles}; 
+          tar -czf results_${k}_${j}-${i}.nobist.all.tar.gz results_${k}_${j}-${i} && rm -rf results_${k}_${j}-${i}
+        done; 
+      done; 
+    done;
+done
