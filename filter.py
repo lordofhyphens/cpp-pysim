@@ -60,4 +60,5 @@ if __name__ == '__main__':
         p.map(_start_dff, args.infiles)
     else:
         p.map(_start_no_dff, args.infiles)
+    p.close()
     p.join()
