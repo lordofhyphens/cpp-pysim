@@ -7,7 +7,7 @@ shift
 for k in $*; do 
   for j in aoi c17; do
     for i in $(seq $start $end); do 
-        for cycles in $(seq 10000 10000 50000 ); do
+        for cycles in $(seq 7000 7000 7000 ); do
           ./run_rebuild_nobist ${k} ${j} ${i} ${cycles}; 
           ./filter ${k} $j ${i} nobist ${cycles}; 
           ./filter-dff ${k} $j $i nobist ${cycles}; 
