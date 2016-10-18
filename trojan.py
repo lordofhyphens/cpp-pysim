@@ -163,7 +163,7 @@ def parasite(ckt, pos, trojan, part = None, seed = None):
         trojan.gates[g].fins = trojan.gates[g].fins + att
         trojan.gates[g].fins = [x for x in trojan.gates[g].fins if x != "DUMMY"]
         for z in att:
-            ckt[z].fots.append(g)
+            ckt[z].fots.add(g)
 
     for g in troj_out:
         victim = random.choice(allowed)
@@ -171,7 +171,7 @@ def parasite(ckt, pos, trojan, part = None, seed = None):
         allowed = [x for x in allowed if x is not victim]
         # get the fins of the victim, pick one at random
         tmp = ckt[victim].fins
-        victim_fin = random.choice(tmp)
+        victim_fin = random.choice(tuple(tmp))
         insert_or = Gate(g+"_WIRED_OR", function="OR")
         insert_or.fins = [victim_fin, g]
         ckt[g+"_WIRED_OR"] = copy.deepcopy(insert_or)
