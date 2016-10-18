@@ -69,9 +69,9 @@ class Trojan(object):
         for g in frontier:
             outgate = Gate(self.name+"_"+str(gateId))
             outgate.function = random.choice(self._out_enum)
-            outgate.fins.append(g)
-            outgate.fins.append(None)
-            outgate.fots.append(None)
+            outgate.fins.add(g)
+            outgate.fins.add(None)
+            outgate.fots.add(None)
             self.set_fots(outgate)
             self.gates[outgate.name] = outgate
             gateId = gateId + 1
@@ -90,14 +90,14 @@ class Trojan(object):
             frontier = [x for x in frontier if x is not i]
             if i is "DUMMY":
                 dummy.pop()
-            self.gates[i].fots.append(gate.name)
+            self.gates[i].fots.add(gate.name)
         frontier = frontier + dummy
 
         return result, frontier
     def set_fots(self, g):
         for i in g.fins:
             if i is not None:
-                self.gates[i].fots.append(g.name)
+                self.gates[i].fots.add(g.name)
     def __str__(self):
         return str([str(self.gates[x]) for x in (self.gates)])
 

@@ -4,17 +4,108 @@ import random
 import copy
 from random import choice
 from operator import itemgetter
+import argparse
 
 import multiprocessing
 from functools import partial
+from itertools import izip, product
+
+def mssl(x):
+    max_ending_here = max_so_far = 0
+    index = 0
+    for c,b,a in x:
+        max_ending_here = max(0, max_ending_here + a)
+        max_so_far = max(max_so_far, max_ending_here)
+        index = index + 1
+    return (max_ending_here, index-1)
+
+def find_bscs(ckt, a):
+    """ Return all of the gates that are a fan-in to this partition. """
+    return reduce(lambda x, y: x | y, [ckt[x].fins for x in a]).difference(set(a))
+
+def get_inputs(ckt, a):
+    """ Return all of the gates that are a fan-in to this partition or are a primary input"""
+    return find_bscs(ckt, a) | set([x for x in a if ckt[x].function.lower() in ['input']])
+
+
+def find_tps(ckt, a):
+    """ Return all of the gates that are a have a fan-out not in this partition. """
+    return set([x for x in a if ckt[x].fots.isdisjoint(set(a))])
+
+def find_dv(v, ckt, b):
+    Ec = len((set(ckt[v].fins) | set(ckt[v].fots)).intersection(set(b)))
+    Enc = len((set(ckt[v].fins) | set(ckt[v].fots))) - Ec
+    return Ec - Enc
+
+def gain(ckt, a, b, d):
+    c_ab = 1 if a in ckt[b].fins or a in ckt[b].fots or b in ckt[a].fins or b in ckt[a].fots else 0
+    return d[a] + d[b] - 2 * c_ab
+
+def maxgain(g):
+    return g[2]
+
+def partition(ckt, gates):
+    Dv = dict()
+    c = 0
+    a = gates[0:int(round(len(gates)/2))]
+    b = gates[int(round(len(gates)/2)):]
+    a_fixed = []
+    b_fixed = []
+    g_sum = 1
+    
+    while g_sum > 0:
+        update_a = a
+        update_b = b
+        tmp_a = copy.deepcopy(a)
+        tmp_b = copy.deepcopy(b)
+        Gm = []
+        while len(a_fixed) < len(a) and len(b_fixed) < len(b):
+            dv_func_a = partial(find_dv, ckt=ckt, b = b)
+            dv_func_b = partial(find_dv, ckt=ckt, b = a)
+            a_dv = map(dv_func_a, update_a)
+            b_dv = map(dv_func_b, update_b)
+            Dv.update(dict(izip(a, a_dv)))
+            Dv.update(dict(izip(b, b_dv)))
+            t = max([(x[0], x[1], gain(ckt,x[0], x[1],Dv)) for x in product(a, b)], key=maxgain)
+            ab_i = set([t[0], t[1]])
+            Gm.append(t)
+            tmp_a = [x for x in tmp_a if x != t[0]] + [t[1]]
+            tmp_b = [x for x in tmp_b if x != t[1]] + [t[0]]
+            a_fixed.append(t[1])
+            b_fixed.append(t[0])
+            update_a = list(set(tmp_a).difference(ckt[t[0]].fins | ckt[t[0]].fots | ckt[t[1]].fins | ckt[t[1]].fots) | set(a_fixed) | set(b_fixed))
+            update_b = list(set(tmp_b).difference(ckt[t[0]].fins | ckt[t[0]].fots | ckt[t[1]].fins | ckt[t[1]].fots) | set(a_fixed) | set(b_fixed))
+            c = c + 1
+            print "Finished swapping cycle ", c
+        g_sum, idx = mssl(Gm)
+        if g_sum > 0:
+            print "Max Gm", g_sum
+            for t in Gm[:idx]:
+                a = list(set([x for x in tmp_a if x != t[0]] + [t[1]]))
+                b = list(set([x for x in tmp_b if x != t[1]] + [t[0]]))
+    return (a, b)
+
+def part_recur(ckt, initial, w):
+    """ Recursive descent to subdivide partitions that violate w """
+    partition_set = []
+    (a, b) = partition(ckt, initial)
+    if len(get_inputs(ckt, a)) > w:
+        partition_set = partition_set + part_recur(ckt, a, w)
+    else:
+        partition_set.append(a)
+    if len(get_inputs(ckt, b)) > w:
+        partition_set = partition_set + part_recur(ckt, b, w)
+    else:
+        partition_set.append(b)
+    return partition_set
 
 class Gate(object):
     _delay = {"AND": 5, "OR": 5, "INPUT": 0}
     def __init__(self, name, function = None):
         self.function = function
         self.name = name
-        self.fins = []
-        self.fots = []
+        self.fins = set()
+        self.fots = set()
         self.bscs = []
         self.tps = [] # test points
         self.gateid = 0
@@ -40,17 +131,21 @@ def gen_test_points():
 
 class Partition(object):
     INPUTS=["bsc","input"]
-    def __init__(self, ckt, initial_frontier = [], max_w = 0, available = []):
-        self.members = []
+    def __init__(self, ckt, members=[], initial_frontier = [], max_w = 0, available = []):
+        self.members = members
         self.ckt = ckt
         self.max_w = max_w
         self.available = available
         self.frontier = initial_frontier # the furthest-in input gates.
-        self.w = len(set([y for sublist in [self.ckt[x].fins for x in self.frontier if self.ckt[x].fins != []] for y in sublist]))
+        self.w = len(set([y for sublist in [self.ckt[x].fins for x in self.frontier if len(self.ckt[x].fins) > 0] for y in sublist]))
         self.members = self.members + self.frontier
         self.output = self.frontier # initial gates are the output.
         if self.w > self.max_w:
             print self.w,"initial width"
+    def add(self, x):
+        self.members.append(x)
+        self.update()
+
     def get_inputs(self):
         return list({x for x in self.members if self.ckt[x].function.lower() in self.INPUTS})
 
@@ -58,7 +153,7 @@ class Partition(object):
         """
         Update internal parameters based on the member list, in case it was modified externally.
         """
-        self.w = len(set([y for sublist in [self.ckt[x].fins for x in self.frontier if self.ckt[x].fins != []] for y in sublist]))
+        self.w = len(set([y for sublist in [self.ckt[x].fins for x in self.frontier if len(self.ckt[x].fins) > 0] for y in sublist]))
         self.output = [x for x in self.members if len(self.ckt[x].fots) == 0]
         self.max_w = self.w
 
@@ -78,7 +173,7 @@ class Partition(object):
                 self.members.append(victim[0])
                 self.available.remove(victim[0])
                 self.frontier = [x for x in self.frontier if len([y for y in self.ckt[x].fins if not y in self.members and y in self.available]) > 0] # remove frontier entries with nothing in them
-                self.w = len(set([y for sublist in [self.ckt[x].fins for x in self.frontier if self.ckt[x].fins != []] for y in sublist])) # recalculate w
+                self.w = len(set([y for sublist in [self.ckt[x].fins for x in self.frontier if len(self.ckt[x].fins) > 0] for y in sublist])) # recalculate w
                 if self.w >= self.max_w - 1:
                     self.members.remove(victim[0])
                     self.available.append(victim[0])
@@ -94,7 +189,6 @@ class Partition(object):
 
 class random_set(object):
     """ iterator whose next() function gives a random set of inputs number until it is exhausted."""
-
     def __init__(self, n = 0):
         self.size = n
         self.available = list(range(0,pow(2,n)))
@@ -152,7 +246,7 @@ def write_bench_file(f, ckt):
             if g.function.upper() == "INPUT": 
                 output_queue[0].append("INPUT(" + k + ")\n")
             else:
-                output_queue[9].append(k + " = " + g.function.lower() + "(" + re.sub('[\[\'\]]', '', str(g.fins)) + ")\n")
+                output_queue[9].append(k + " = " + g.function.lower() + "(" + re.sub('[\[\'\]]', '', str(list(g.fins))) + ")\n")
             if len(g.fots) == 0 and g.function.upper() != "TEST_POINT":
                 output_queue[1].append("OUTPUT("+ k + ")\n")
         for k, q in output_queue.iteritems():
@@ -190,12 +284,12 @@ def read_bench_file(f):
                 r = re.findall(gate_form, l)[0]
                 g = Gate(r[0].strip())
                 g.function = r[1].strip()
-                g.fins = [ x.strip() for x in re.split(split_form, r[2].strip())]
+                g.fins = set([ x.strip() for x in re.split(split_form, r[2].strip())])
                 print "Gate", g.name ,"fan-ins:",  g.fins
                 ckt[r[0].strip()] = g
                 try:
                     for fins in g.fins:
-                        ckt[fins].fots.append(g.name)
+                        ckt[fins].fots.add(g.name)
                 except KeyError:
                     pass
             else:
@@ -206,15 +300,15 @@ def read_bench_file(f):
             print k, fin
             
             if k not in ckt[fin].fots:
-                ckt[fin].fots.append(k)
+                ckt[fin].fots.add(k)
 
 # add all gates that have this as a fanin to this gate's fanout list
     for k,z in ckt.items():
-        fots =  [ f for f in ckt.values() if k in f.fins] 
+        fots =  [ f for f in ckt.values() if k in f.fins]
         if len(fots) > 0:
             for i in fots:
                 print "Adding ", i.name, " to fanouts of", k
-                z.fots.append(i.name)
+                z.fots.add(i.name)
 
     PIs = map(lambda x: x[0], PIs)
 
@@ -222,50 +316,35 @@ def read_bench_file(f):
     return ckt, PIs, POs
 
 def partition_ckt(ckt, POs, w = 5):
-    print "Sorting ckt"
-    sorted_ckt = [x for x in sort_topological(ckt)]
-    print "Sorted ckt"
-    unplaced = [x for x in sorted_ckt if x not in POs]
-
-    parts = []
-    for po in POs:
-       p = Partition(ckt=ckt, initial_frontier=[po], available=unplaced, max_w = w)   
-       l = [po]
-       while p.grow() is not None:
-           pass
-       parts.append(p)
-       unplaced = [x for x in unplaced if x not in p.members]
-
-    while len(unplaced) > 0:
-       start = random.sample(unplaced, 1)
-       p = Partition(ckt=ckt, initial_frontier=start, available=unplaced, max_w = w)
-       while p.grow() is not None:
-           pass
-       parts.append(p)
-       unplaced = [x for x in unplaced if x not in p.members]
-
+    print "Partitioning circuit"
+    part_list = part_recur(ckt, list(set(ckt.iterkeys())), w)
+    parts = map(lambda x: Partition(ckt=ckt, members=x, max_w=w),part_list)
     bscs = gen_bsc()
     tps = gen_test_points()
+    print "Adding BSCs and Test Points to ckt"
     for p in parts:
-       for g in p.frontier:
-          new_finset = ckt[g].fins
-          for fin in ckt[g].fins:
-             new_bsc = bscs.next()
-             new_bsc.fots.append(g)
-             ckt[new_bsc.name] = new_bsc
-             ckt[new_bsc.name].fins.append(fin)
-             ckt[new_bsc.name].fots.append(g)
-             ckt[g].bscs.append(new_bsc.name)
-             p.members.append(new_bsc.name)
-             new_finset = [x for x in new_finset if x is not fin]
-             new_finset.append(new_bsc.name)
-          ckt[g].fins = new_finset
-          
-       new_tp = tps.next()
-       new_tp.fins.append(p.members[0])
-       ckt[new_tp.name] = new_tp
-       p.members.append(new_tp.name)
-       ckt[p.members[0]].tps.append(new_tp.name)
+        made = dict()
+        for i in find_bscs(ckt, p.members):
+            part_gates = [x for x in p.members if i in ckt[x].fins]
+            for g in part_gates:
+                ckt[i].fots.remove(g)
+                if i not in made:
+                    new_bsc = bscs.next()
+                    new_bsc.fins.add(i)
+                    new_bsc.fots.add(g)
+                    ckt[new_bsc.name] = new_bsc
+                    ckt[g].fins.add(new_bsc.name)
+                    made[i] = new_bsc.name
+                else:
+                    ckt[made[i]].fots.add(g)
+                    ckt[g].fins.add(made[i])
+                ckt[g].fins.remove(i)
+        for k in find_tps(ckt, p.members):
+            new_tp = tps.next()
+            new_tp.fins.add(k)
+            ckt[new_tp.name] = new_tp
+            p.add(new_tp.name)
+            ckt[p.members[0]].tps.append(new_tp.name)
 
     return ckt, parts
 
