@@ -97,8 +97,8 @@ def partition(ckt, gates):
         tmp_b = copy.deepcopy(b)
         Gm = []
         while len(a_fixed) < len(a) and len(b_fixed) < len(b):
-            dv_func_a = partial(find_dv, ckt=ckt, b = b)
-            dv_func_b = partial(find_dv, ckt=ckt, b = a)
+            dv_func_a = partial(find_dv, ckt=ckt, b = b, a = a)
+            dv_func_b = partial(find_dv, ckt=ckt, b = a, a = b)
             a_dv = map(dv_func_a, update_a)
             b_dv = map(dv_func_b, update_b)
             Dv.update(dict(izip(a, a_dv)))
@@ -125,10 +125,11 @@ def partition(ckt, gates):
 def part_recur(ckt, initial, w):
     """ Recursive descent to subdivide partitions that violate w """
     partition_set = []
-    partition_mech = KLPart.KLPartition()
-    convert_Gate(ckt, partition_mech)
+#    partition_mech = KLPart.KLPartition()
+#    convert_Gate(ckt, partition_mech)
     print "Diving into C++"
-    (a, b) = partition_mech.partition_once(KLPart.StringVector(list(set(initial))))
+#    (a, b) = partition_mech.partition_once(KLPart.StringVector(list(set(initial))))
+    (a, b) = partition(ckt, list(set(initial)))
     print "Coming back up"
     if len(get_inputs(ckt, a)) > w:
         partition_set = partition_set + part_recur(ckt, a, w)
