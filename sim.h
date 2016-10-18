@@ -1,3 +1,6 @@
+
+#ifndef __EVENTSIM__
+#define __EVENTSIM__
 // public interface for event-driven simulator, patterned on Python
 #include <set>
 #include <map>
@@ -8,7 +11,6 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-
 using namespace std;
 
 typedef map<unsigned int, bool> result_t;
@@ -106,4 +108,4 @@ class EventSim {
     inputs(map<size_t, map<string, bool> >()), cycles(vector<size_t>()), events(map<size_t, set<string> >()), verbosity(log_level)
     { }
 };
-
+#endif

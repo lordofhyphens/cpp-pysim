@@ -5,10 +5,47 @@ import copy
 from random import choice
 from operator import itemgetter
 import argparse
+import KLPart
 
+import EventSim
 import multiprocessing
 from functools import partial
 from itertools import izip, product
+
+def convert_Gate(ckt, partfile):
+    adapt = {
+        "AND": EventSim.AND,
+        "NAND": EventSim.NAND,
+        "OR": EventSim.OR,
+        "NOR": EventSim.NOR,
+        "XOR": EventSim.XOR,
+        "XNOR": EventSim.XNOR,
+        "BUFF": EventSim.BUFF,
+        "BUF": EventSim.BUFF,
+        "NOT": EventSim.NOT,
+        "OUTPUT": EventSim.OUTPUT,
+        "DUMMY": EventSim.DUMMY,
+        "BSC": EventSim.BSC,
+        "TEST_POINT": EventSim.TP,
+        "INPUT" : EventSim.INPUT,
+        "DFF_O" : EventSim.DFF_O,
+        "DFF" : EventSim.DFF
+        }
+
+    for k, v in ckt.iteritems():
+        # convert to Gate objects
+        f1 = KLPart.StringVector(list(set(v.fins)))
+        f2 = KLPart.StringVector(list(set(v.fots)))
+        if v.function.upper() is "DFF":
+            # Add the DFF
+            g = EventSim.Gate(adapt[v.function.upper()], v.name, f1, Eventsim.StringVector([]), v.delay, True, False)
+            partfile.add_gate(g)
+            # Add the DFF_O
+            g = EventSim.Gate(adapt[v.function.upper()], v.name + "_O", v.name, KLPart.StringVector([]), f2, 0, False, False)
+            partfile.add_gate(g)
+        else:
+            g = EventSim.Gate(adapt[v.function.upper()], v.name, f1, f2, v.delay, len(v.fots) == 0, (len(v.fots) == 0 and v.function.upper() != "TEST_POINT"))
+            partfile.add_gate(g)
 
 def mssl(x):
     max_ending_here = max_so_far = 0
@@ -20,11 +57,11 @@ def mssl(x):
     return (max_ending_here, index-1)
 
 def find_bscs(ckt, a):
-    """ Return all of the gates that are a fan-in to this partition. """
+    """ Return all of the gates that are a fan-in to thortpartition. """
     return reduce(lambda x, y: x | y, [ckt[x].fins for x in a]).difference(set(a))
 
 def get_inputs(ckt, a):
-    """ Return all of the gates that are a fan-in to this partition or are a primary input"""
+    """ Return all of the gates that are a fa, n-in to this partition or are a primary input"""
     return find_bscs(ckt, a) | set([x for x in a if ckt[x].function.lower() in ['input']])
 
 
@@ -32,9 +69,9 @@ def find_tps(ckt, a):
     """ Return all of the gates that are a have a fan-out not in this partition. """
     return set([x for x in a if ckt[x].fots.isdisjoint(set(a))])
 
-def find_dv(v, ckt, b):
-    Ec = len((set(ckt[v].fins) | set(ckt[v].fots)).intersection(set(b)))
-    Enc = len((set(ckt[v].fins) | set(ckt[v].fots))) - Ec
+def find_dv(v, ckt, a, b):
+    Ec = len((set(ckt[v].fins).intersection(set(b)) | set(ckt[v].fots)).intersection(set(b)))
+    Enc = len((set(ckt[v].fins).intersection(set(a)) | set(ckt[v].fots).intersection(set(a)))) 
     return Ec - Enc
 
 def gain(ckt, a, b, d):
@@ -76,8 +113,8 @@ def partition(ckt, gates):
             update_a = list(set(tmp_a).difference(ckt[t[0]].fins | ckt[t[0]].fots | ckt[t[1]].fins | ckt[t[1]].fots) | set(a_fixed) | set(b_fixed))
             update_b = list(set(tmp_b).difference(ckt[t[0]].fins | ckt[t[0]].fots | ckt[t[1]].fins | ckt[t[1]].fots) | set(a_fixed) | set(b_fixed))
             c = c + 1
-            print "Finished swapping cycle ", c
         g_sum, idx = mssl(Gm)
+        print "Finished swapping cycle ", c, " g_sum ", g_sum
         if g_sum > 0:
             print "Max Gm", g_sum
             for t in Gm[:idx]:
@@ -88,7 +125,9 @@ def partition(ckt, gates):
 def part_recur(ckt, initial, w):
     """ Recursive descent to subdivide partitions that violate w """
     partition_set = []
-    (a, b) = partition(ckt, initial)
+    partition_mech = KLPart.KLPartition()
+    convert_Gate(ckt, partition_mech)
+    (a, b) = partition_mech.partition_once(KLPart.StringVector(list(set(initial))))
     if len(get_inputs(ckt, a)) > w:
         partition_set = partition_set + part_recur(ckt, a, w)
     else:
