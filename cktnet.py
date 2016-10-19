@@ -81,6 +81,9 @@ def gain(ckt, a, b, d):
 def maxgain(g):
     return g[2]
 
+def pack_gain(x, ckt, dv):
+    return (x[0], x[1], gain(ckt, x[0], x[1], dv))
+
 def partition(ckt, gates):
     Dv = dict()
     c = 0
@@ -89,13 +92,16 @@ def partition(ckt, gates):
     a_fixed = []
     b_fixed = []
     g_sum = 1
-    
+    pool = multiprocessing.Pool(10)
     while g_sum > 0:
         update_a = a
         update_b = b
         tmp_a = copy.deepcopy(a)
         tmp_b = copy.deepcopy(b)
         Gm = []
+        a_fixed = []
+        b_fixed = []
+        print "GSUM:", g_sum
         while len(a_fixed) < len(a) and len(b_fixed) < len(b):
             dv_func_a = partial(find_dv, ckt=ckt, b = b, a = a)
             dv_func_b = partial(find_dv, ckt=ckt, b = a, a = b)
@@ -103,7 +109,9 @@ def partition(ckt, gates):
             b_dv = map(dv_func_b, update_b)
             Dv.update(dict(izip(a, a_dv)))
             Dv.update(dict(izip(b, b_dv)))
-            t = max([(x[0], x[1], gain(ckt,x[0], x[1],Dv)) for x in product(a, b)], key=maxgain)
+            gain_func = partial(pack_gain, ckt=ckt, dv=Dv)
+            print "Computing max gain"
+            t = max(pool.map(gain_func, product(a,b)), key=maxgain)
             ab_i = set([t[0], t[1]])
             Gm.append(t)
             tmp_a = [x for x in tmp_a if x != t[0]] + [t[1]]
@@ -120,6 +128,8 @@ def partition(ckt, gates):
             for t in Gm[:idx]:
                 a = list(set([x for x in tmp_a if x != t[0]] + [t[1]]))
                 b = list(set([x for x in tmp_b if x != t[1]] + [t[0]]))
+    pool.close()
+    pool.join()
     return (a, b)
 
 def part_recur(ckt, initial, w):
