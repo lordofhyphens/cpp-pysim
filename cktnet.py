@@ -119,8 +119,8 @@ def partition(ckt, gates):
         while len(a_fixed) < len(a) and len(b_fixed) < len(b):
             print c, "Set lengths:", len(a_fixed), len(a), len(b_fixed), len(b)
             print "Update gain/dv queue:", len(tmp_a - a_fixed), len(tmp_b - b_fixed)
-            dv_func_a = partial(find_dv, ckt=ckt, b = b, a = a)
-            dv_func_b = partial(find_dv, ckt=ckt, b = a, a = b)
+            dv_func_a = partial(find_dv, ckt=ckt, b = tmp_b, a = tmp_a)
+            dv_func_b = partial(find_dv, ckt=ckt, b = tmp_a, a = tmp_b)
             print c, ": Computing Dv for a, b"
             a_dv = pool.map(dv_func_a, tmp_a - a_fixed)
             b_dv = pool.map(dv_func_b, tmp_b - b_fixed)
