@@ -70,8 +70,8 @@ def find_tps(ckt, a):
     return set([x for x in a if ckt[x].fots.isdisjoint(set(a))])
 
 def find_dv(v, ckt, a, b):
-    E = len(ckt[v].fins.intersection(a) | ckt[v].fins.intersection(a))
-    I = len(ckt[v].fins.intersection(b) | ckt[v].fins.intersection(b))
+    I = len((ckt[v].fins.intersection(a) | ckt[v].fots.intersection(a)) - set(v))
+    E = len((ckt[v].fins.intersection(b) | ckt[v].fots.intersection(b)) - set(v))
     return (v, E - I)
 
 def gain(ckt, a, b, d):
@@ -107,8 +107,8 @@ def partition(ckt, gates):
     g_sum = 99999999
     prev_gsum = None
     pool = multiprocessing.Pool(8)
+    swap_count = dict()
     while g_sum > 0 and prev_gsum != g_sum:
-
         tmp_a = copy.deepcopy(a)
         tmp_b = copy.deepcopy(b)
         Gm = []
@@ -127,13 +127,19 @@ def partition(ckt, gates):
             a_dv = sorted(a_dv, key=getD, reverse=True)
             b_dv = sorted(b_dv, key=getD, reverse=True)
             print c, ": Computing max gain"
-            max_gain = (a_dv[0][0], b_dv[0][0], sorted_gain(a_dv[0], b_dv[0], ckt))
-            for j,k in izip(a_dv[1:], b_dv[1:]):
+            max_gain = (None, None, -999999)
+            for j,k in izip(a_dv, b_dv):
                 tmp = sorted_gain(j,k, ckt)
+                if tuple(sorted([j[0], k[0]])) in swap_count:
+                    continue # don't use this
                 if max_gain[2] > tmp:
                     break
                 else:
                     max_gain = (j[0], k[0], tmp)
+            if None in max_gain:
+                a_fixed |= tmp_a
+                b_fixed |= tmp_b
+                continue 
             t = max_gain
             Gm.append(t)
             print "Trying swap of ", t[0], "<->", t[1], " gain ", t[2]
@@ -155,6 +161,7 @@ def partition(ckt, gates):
                 a.add(t[1])
                 b.remove(t[1])
                 b.add(t[0])
+                swap_count[tuple(sorted([t[0],t[1]]))] = 1
 
     pool.close()
     pool.join()
