@@ -105,8 +105,9 @@ def partition(ckt, gates):
         while len(a_fixed) < len(a) and len(b_fixed) < len(b):
             dv_func_a = partial(find_dv, ckt=ckt, b = b, a = a)
             dv_func_b = partial(find_dv, ckt=ckt, b = a, a = b)
-            a_dv = map(dv_func_a, update_a)
-            b_dv = map(dv_func_b, update_b)
+            print "Computing Dv for a, b"
+            a_dv = pool.map(dv_func_a, update_a)
+            b_dv = pool.map(dv_func_b, update_b)
             Dv.update(dict(izip(a, a_dv)))
             Dv.update(dict(izip(b, b_dv)))
             gain_func = partial(pack_gain, ckt=ckt, dv=Dv)
