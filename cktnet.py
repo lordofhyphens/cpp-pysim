@@ -83,46 +83,56 @@ def maxgain(g):
 
 def pack_gain(x, ckt, dv):
     return (x[0], x[1], gain(ckt, x[0], x[1], dv))
+def getKey(x):
+    return x[2]
+
+def getD(x):
+    return x[1]
+
+def sorted_gain(a, b, ckt):
+    c_ab = 1 if a[0] in ckt[b[0]].fins or a[0] in ckt[b[0]].fots or b[0] in ckt[a[0]].fins or b[0] in ckt[a[0]].fots else 0
+    return a[1] + b[1] - 2 * c_ab
 
 def partition(ckt, gates):
-    Dv = dict()
     c = 0
     a = set(gates[0:int(round(len(gates)/2))])
     b = set(gates[int(round(len(gates)/2)):])
     a_fixed = set()
     b_fixed = set()
     g_sum = 1
-    pool = multiprocessing.Pool(4)
+    pool = multiprocessing.Pool(8)
     while g_sum > 0:
-        update_a = a
-        update_b = b
         tmp_a = copy.deepcopy(a)
         tmp_b = copy.deepcopy(b)
         Gm = []
         a_fixed = set()
         b_fixed = set()
+        
         print "GSUM:", g_sum
         while len(a_fixed) < len(a) and len(b_fixed) < len(b):
             print c, "Set lengths:", len(a_fixed), len(a), len(b_fixed), len(b)
-            print "Update gain/dv queue:", len(update_a), len(update_b)
+            print "Update gain/dv queue:", len(tmp_a - a_fixed), len(tmp_b - b_fixed)
             dv_func_a = partial(find_dv, ckt=ckt, b = b, a = a)
             dv_func_b = partial(find_dv, ckt=ckt, b = a, a = b)
             print c, ": Computing Dv for a, b"
-            a_dv = pool.map(dv_func_a, update_a)
-            b_dv = pool.map(dv_func_b, update_b)
-            Dv.update(dict(a_dv))
-            Dv.update(dict(b_dv))
+            a_dv = pool.map(dv_func_a, tmp_a - a_fixed)
+            b_dv = pool.map(dv_func_b, tmp_b - b_fixed)
+            a_dv = sorted(a_dv, key=getD, reverse=True)
+            b_dv = sorted(b_dv, key=getD, reverse=True)
             print c, ": Computing max gain"
-            gain_func = partial(pack_gain, ckt=ckt, dv=Dv)
-            t = max(pool.map(gain_func, product(tmp_a - a_fixed,tmp_b - b_fixed)), key=maxgain)
-            if t < 0:
-                # lock these nodes and continue.
+            max_gain = (None, None, 0)
+            for j,k in izip(a_dv, b_dv):
+                tmp = sorted_gain(j,k, ckt)
+                if max_gain[2] > tmp:
+                    break
+                else:
+                    max_gain = (j[0], k[0], tmp)
+            t = max_gain
+            if t == 0:
+                # nothing to be gained, lock these nodes and continue.
                 a_fixed.add(t[0])
                 b_fixed.add(t[1])
-                update_a = set()
-                update_b = set()
                 continue
-
             Gm.append(t)
             print "Trying swap of ", t[0], "<->", t[1], " gain ", t[2]
             tmp_a.remove(t[0])
@@ -131,8 +141,6 @@ def partition(ckt, gates):
             tmp_b.add(t[0])
             a_fixed.add(t[1])
             b_fixed.add(t[0])
-            update_a = ckt[t[0]].fins | ckt[t[0]].fots | ckt[t[1]].fins | ckt[t[1]].fots - (a_fixed | b_fixed)
-            update_b = ckt[t[0]].fins | ckt[t[0]].fots | ckt[t[1]].fins | ckt[t[1]].fots - (a_fixed | b_fixed)
             c = c + 1
         g_sum, idx = mssl(Gm)
         print "Finished swapping cycle ", c, " g_sum ", g_sum
