@@ -115,8 +115,16 @@ def partition(ckt, gates):
             print c, ": Computing max gain"
             gain_func = partial(pack_gain, ckt=ckt, dv=Dv)
             t = max(pool.map(gain_func, product(tmp_a - a_fixed,tmp_b - b_fixed)), key=maxgain)
+            if t < 0:
+                # lock these nodes and continue.
+                a_fixed.add(t[0])
+                b_fixed.add(t[1])
+                update_a = set()
+                update_b = set()
+                continue
+
             Gm.append(t)
-            print "Trying swap of ", t[0], "<->", t[1], " gain ", t
+            print "Trying swap of ", t[0], "<->", t[1], " gain ", t[2]
             tmp_a.remove(t[0])
             tmp_b.remove(t[1])
             tmp_a.add(t[1])
