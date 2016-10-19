@@ -70,9 +70,9 @@ def find_tps(ckt, a):
     return set([x for x in a if ckt[x].fots.isdisjoint(set(a))])
 
 def find_dv(v, ckt, a, b):
-    Ec = len((set(ckt[v].fins).intersection(set(b)) | set(ckt[v].fots)).intersection(set(b)))
-    Enc = len((set(ckt[v].fins).intersection(set(a)) | set(ckt[v].fots).intersection(set(a)))) 
-    return (v, Ec - Enc)
+    E = len(ckt[v].fins.intersection(a) | ckt[v].fins.intersection(a))
+    I = len(ckt[v].fins.intersection(b) | ckt[v].fins.intersection(b))
+    return (v, E - I)
 
 def gain(ckt, a, b, d):
     c_ab = 1 if a in ckt[b].fins or a in ckt[b].fots or b in ckt[a].fins or b in ckt[a].fots else 0
@@ -95,13 +95,20 @@ def sorted_gain(a, b, ckt):
 
 def partition(ckt, gates):
     c = 0
+    if len(gates) % 2 > 0:
+        print "Adding dummy node for balancing purposes."
+        ckt["___PART_DUMMY___"] = Gate("___PART_DUMMY___")
+        ckt["___PART_DUMMY___"].function="DUMMY"
+        gates.append("___PART_DUMMY___")
     a = set(gates[0:int(round(len(gates)/2))])
     b = set(gates[int(round(len(gates)/2)):])
     a_fixed = set()
     b_fixed = set()
-    g_sum = 1
+    g_sum = 99999999
+    prev_gsum = None
     pool = multiprocessing.Pool(8)
-    while g_sum > 0:
+    while g_sum > 0 and prev_gsum != g_sum:
+
         tmp_a = copy.deepcopy(a)
         tmp_b = copy.deepcopy(b)
         Gm = []
@@ -121,18 +128,13 @@ def partition(ckt, gates):
             b_dv = sorted(b_dv, key=getD, reverse=True)
             print c, ": Computing max gain"
             max_gain = (a_dv[0][0], b_dv[0][0], sorted_gain(a_dv[0], b_dv[0], ckt))
-            for j,k in izip(a_dv, b_dv):
+            for j,k in izip(a_dv[1:], b_dv[1:]):
                 tmp = sorted_gain(j,k, ckt)
                 if max_gain[2] > tmp:
                     break
                 else:
                     max_gain = (j[0], k[0], tmp)
             t = max_gain
-            if t == 0:
-                # nothing to be gained, lock these nodes and continue.
-                a_fixed.add(t[0])
-                b_fixed.add(t[1])
-                continue
             Gm.append(t)
             print "Trying swap of ", t[0], "<->", t[1], " gain ", t[2]
             
@@ -143,6 +145,7 @@ def partition(ckt, gates):
             a_fixed.add(t[1])
             b_fixed.add(t[0])
             c = c + 1
+        pre_gsum = g_sum
         g_sum, idx = mssl(Gm)
         print "Finished swapping cycle ", c, " g_sum ", g_sum
         if g_sum > 0:
@@ -152,6 +155,7 @@ def partition(ckt, gates):
                 a.add(t[1])
                 b.remove(t[1])
                 b.add(t[0])
+
     pool.close()
     pool.join()
     return (list(a), list(b))
