@@ -8,5 +8,5 @@ echo "Generating ${1} with ${2} inserted as Trojan, width ${w}"
 rm -rf ${1}_${2} results_${1}_${2}
 mkdir -p ${1}_${2}/input ${1}_${2}/part ${1}_${2}/bench results_${1}_${2}
 
-pypy ./test.py --outdir ${1}_${2} --pe -tc i85/${2}.bench i89/${1}.bench > /dev/null
+python ./test.py --outdir ${1}_${2} --pe -tc i85/${2}.bench i89/${1}.bench
 mv ${1}_${2} ${1}_${2}.w${w}
