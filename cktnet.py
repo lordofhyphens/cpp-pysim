@@ -72,7 +72,7 @@ def find_tps(ckt, a):
 def find_dv(v, ckt, a, b):
     Ec = len((set(ckt[v].fins).intersection(set(b)) | set(ckt[v].fots)).intersection(set(b)))
     Enc = len((set(ckt[v].fins).intersection(set(a)) | set(ckt[v].fots).intersection(set(a)))) 
-    return Ec - Enc
+    return (v, Ec - Enc)
 
 def gain(ckt, a, b, d):
     c_ab = 1 if a in ckt[b].fins or a in ckt[b].fots or b in ckt[a].fins or b in ckt[a].fots else 0
@@ -87,51 +87,57 @@ def pack_gain(x, ckt, dv):
 def partition(ckt, gates):
     Dv = dict()
     c = 0
-    a = gates[0:int(round(len(gates)/2))]
-    b = gates[int(round(len(gates)/2)):]
-    a_fixed = []
-    b_fixed = []
+    a = set(gates[0:int(round(len(gates)/2))])
+    b = set(gates[int(round(len(gates)/2)):])
+    a_fixed = set()
+    b_fixed = set()
     g_sum = 1
-    pool = multiprocessing.Pool(10)
+    pool = multiprocessing.Pool(4)
     while g_sum > 0:
         update_a = a
         update_b = b
         tmp_a = copy.deepcopy(a)
         tmp_b = copy.deepcopy(b)
         Gm = []
-        a_fixed = []
-        b_fixed = []
+        a_fixed = set()
+        b_fixed = set()
         print "GSUM:", g_sum
         while len(a_fixed) < len(a) and len(b_fixed) < len(b):
+            print c, "Set lengths:", len(a_fixed), len(a), len(b_fixed), len(b)
+            print "Update gain/dv queue:", len(update_a), len(update_b)
             dv_func_a = partial(find_dv, ckt=ckt, b = b, a = a)
             dv_func_b = partial(find_dv, ckt=ckt, b = a, a = b)
-            print "Computing Dv for a, b"
+            print c, ": Computing Dv for a, b"
             a_dv = pool.map(dv_func_a, update_a)
             b_dv = pool.map(dv_func_b, update_b)
-            Dv.update(dict(izip(a, a_dv)))
-            Dv.update(dict(izip(b, b_dv)))
+            Dv.update(dict(a_dv))
+            Dv.update(dict(b_dv))
+            print c, ": Computing max gain"
             gain_func = partial(pack_gain, ckt=ckt, dv=Dv)
-            print "Computing max gain"
-            t = max(pool.map(gain_func, product(a,b)), key=maxgain)
-            ab_i = set([t[0], t[1]])
+            t = max(pool.map(gain_func, product(tmp_a - a_fixed,tmp_b - b_fixed)), key=maxgain)
             Gm.append(t)
-            tmp_a = [x for x in tmp_a if x != t[0]] + [t[1]]
-            tmp_b = [x for x in tmp_b if x != t[1]] + [t[0]]
-            a_fixed.append(t[1])
-            b_fixed.append(t[0])
-            update_a = list(set(tmp_a).difference(ckt[t[0]].fins | ckt[t[0]].fots | ckt[t[1]].fins | ckt[t[1]].fots) | set(a_fixed) | set(b_fixed))
-            update_b = list(set(tmp_b).difference(ckt[t[0]].fins | ckt[t[0]].fots | ckt[t[1]].fins | ckt[t[1]].fots) | set(a_fixed) | set(b_fixed))
+            print "Trying swap of ", t[0], "<->", t[1], " gain ", t
+            tmp_a.remove(t[0])
+            tmp_b.remove(t[1])
+            tmp_a.add(t[1])
+            tmp_b.add(t[0])
+            a_fixed.add(t[1])
+            b_fixed.add(t[0])
+            update_a = ckt[t[0]].fins | ckt[t[0]].fots | ckt[t[1]].fins | ckt[t[1]].fots - (a_fixed | b_fixed)
+            update_b = ckt[t[0]].fins | ckt[t[0]].fots | ckt[t[1]].fins | ckt[t[1]].fots - (a_fixed | b_fixed)
             c = c + 1
         g_sum, idx = mssl(Gm)
         print "Finished swapping cycle ", c, " g_sum ", g_sum
         if g_sum > 0:
             print "Max Gm", g_sum
             for t in Gm[:idx]:
-                a = list(set([x for x in tmp_a if x != t[0]] + [t[1]]))
-                b = list(set([x for x in tmp_b if x != t[1]] + [t[0]]))
+                a.remove(t[0])
+                a.add(t[1])
+                b.remove(t[1])
+                b.add(t[0])
     pool.close()
     pool.join()
-    return (a, b)
+    return (list(a), list(b))
 
 def part_recur(ckt, initial, w):
     """ Recursive descent to subdivide partitions that violate w """
