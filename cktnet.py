@@ -120,7 +120,7 @@ def partition(ckt, gates):
             a_dv = sorted(a_dv, key=getD, reverse=True)
             b_dv = sorted(b_dv, key=getD, reverse=True)
             print c, ": Computing max gain"
-            max_gain = (None, None, 0)
+            max_gain = (a_dv[0][0], b_dv[0][0], sorted_gain(a_dv[0], b_dv[0], ckt))
             for j,k in izip(a_dv, b_dv):
                 tmp = sorted_gain(j,k, ckt)
                 if max_gain[2] > tmp:
@@ -135,6 +135,7 @@ def partition(ckt, gates):
                 continue
             Gm.append(t)
             print "Trying swap of ", t[0], "<->", t[1], " gain ", t[2]
+            
             tmp_a.remove(t[0])
             tmp_b.remove(t[1])
             tmp_a.add(t[1])
