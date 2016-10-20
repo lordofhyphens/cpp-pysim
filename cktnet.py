@@ -165,6 +165,9 @@ def partition(ckt, gates):
 
     pool.close()
     pool.join()
+    if "___PART_DUMMY___" in a: a.remove("___PART_DUMMY___")
+    if "___PART_DUMMY___" in b: b.remove("___PART_DUMMY___")
+    if "___PART_DUMMY___" in ckt: del ckt["___PART_DUMMY___"]
     return (list(a), list(b))
 
 def part_recur(ckt, initial, w):
