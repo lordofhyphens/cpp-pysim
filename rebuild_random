@@ -9,4 +9,4 @@ cp partitioned/pyTrojan_${1}.bench_inputs.pickle ${1}_${2}-${3}_random/input/
 cp partitioned/pyTrojan_${1}.bench-ckt.bench ${1}_${2}-${3}_random/bench/
 cp partitioned/pyTrojan_${1}.bench_partitions.pickle ${1}_${2}-${3}_random/part/
 
-pypy ./test_random_bscs.py --outdir ${1}_${2}-${3}_random -tc i85/${2}.bench partitioned/pyTrojan_${1}.bench-ckt.bench i89/${1}.bench
+python ./test_random_bscs.py --outdir ${1}_${2}-${3}_random -tc i85/${2}.bench partitioned/pyTrojan_${1}.bench-ckt.bench i89/${1}.bench

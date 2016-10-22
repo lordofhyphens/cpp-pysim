@@ -7,21 +7,11 @@ shift
 for k in $*; do 
   for j in aoi c17; do
     for i in $(seq $start $end); do 
-      if [ -d "${k}_${j}-${i}_random" ]; then 
-        echo "dir"
-      else 
         ./rebuild_random ${k} ${j} ${i}; 
-      fi
-      if [ -d "results_${k}_${j}-${i}_random" ]; then 
-        if [ "$(ls results_${k}_${j}-${i}_random | wc -l)" -gt 400 ]; then 
-          echo "results"
-        else
-          ./run_random.sh ${k} ${j} ${i}; 
-        fi
-      fi
-      ./filter-dff-random ${k} ${j} ${i}; 
-      ./filter-random ${k} ${j} ${i}; 
-      tar -czf results_${k}_${j}-${i}.all.random.tar.gz results_${k}_${j}-${i}_random 
+        ./run_random.sh ${k} ${j} ${i}; 
+        ./filter-dff-random ${k} ${j} ${i}; 
+        ./filter-random ${k} ${j} ${i}; 
+        tar -czf results_${k}_${j}-${i}.all.random.tar.gz results_${k}_${j}-${i}_random 
     done; 
   done; 
 done
