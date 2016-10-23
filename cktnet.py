@@ -149,8 +149,6 @@ def partition(ckt, gates):
                     tmp = sorted_gain(j,k, ckt)
                     if ','.join(sorted([j[0], k[0]])) in swap_count.keys():
                         continue # don't use this
-                    else:
-                        print swap_count
                     if max_gain[2] > tmp:
                         break
                     else:
