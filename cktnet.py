@@ -129,11 +129,17 @@ def partition(ckt, gates):
                 if a_dv is None:
                     a_dv = pool.map(dv_func_a, tmp_a - a_fixed)
                 else:
-                    a_dv = a_dv + map(dv_func_a, to_update_a)
+                    if len(to_update_a) > len(a) / 3:
+                        a_dv = a_dv + pool.map(dv_func_a, to_update_a)
+                    else:
+                        a_dv = a_dv + map(dv_func_a, to_update_a)
                 if b_dv is None:
                     b_dv = pool.map(dv_func_b, tmp_b - b_fixed)
                 else:
-                    b_dv = b_dv + map(dv_func_b, to_update_b)
+                    if len(to_update_b) > len(b) / 3:
+                        b_dv = b_dv + pool.map(dv_func_b, to_update_b)
+                    else:
+                        b_dv = b_dv + map(dv_func_b, to_update_b)
                 
                 a_dv = sorted(a_dv, key=getD, reverse=True)
                 b_dv = sorted(b_dv, key=getD, reverse=True)
