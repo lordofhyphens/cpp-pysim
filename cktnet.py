@@ -180,8 +180,8 @@ def partition(ckt, gates):
             g_sum, idx = mssl(Gm)
             print "Finished swapping cycle ", c, " g_sum ", g_sum
             if g_sum > 0:
-                print "Max Gm", g_sum
-                for t in Gm[:idx]:
+                print "Max Gm", g_sum, idx
+                for t in Gm[:idx+1]:
                     print "Actually swapping " , t[0], "<->", t[1]
                     a.remove(t[0])
                     a.add(t[1])
