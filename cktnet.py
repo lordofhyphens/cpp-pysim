@@ -114,7 +114,10 @@ def partition(ckt, gates):
         Gm = []
         a_fixed = set()
         b_fixed = set()
-        
+        a_dv = None
+        b_dv = None
+        to_update_a = None
+        to_update_b = None
         print "GSUM:", g_sum
         while len(a_fixed) < len(a) and len(b_fixed) < len(b):
             print c, "Set lengths:", len(a_fixed), len(a), len(b_fixed), len(b)
@@ -122,8 +125,15 @@ def partition(ckt, gates):
             dv_func_a = partial(find_dv, ckt=ckt, b = tmp_b, a = tmp_a)
             dv_func_b = partial(find_dv, ckt=ckt, b = tmp_a, a = tmp_b)
             print c, ": Computing Dv for a, b"
-            a_dv = pool.map(dv_func_a, tmp_a - a_fixed)
-            b_dv = pool.map(dv_func_b, tmp_b - b_fixed)
+            if a_dv is None:
+                a_dv = pool.map(dv_func_a, tmp_a - a_fixed)
+            else:
+                a_dv = a_dv + pool.map(dv_func_a, to_update_a)
+            if b_dv is None:
+                b_dv = pool.map(dv_func_b, tmp_b - b_fixed)
+            else:
+                b_dv = b_dv + pool.map(dv_func_b, to_update_b)
+            print len(a_dv), len(b_dv)
             a_dv = sorted(a_dv, key=getD, reverse=True)
             b_dv = sorted(b_dv, key=getD, reverse=True)
             print c, ": Computing max gain"
@@ -143,6 +153,8 @@ def partition(ckt, gates):
             t = max_gain
             Gm.append(t)
             print "Trying swap of ", t[0], "<->", t[1], " gain ", t[2]
+            to_update_a = set([x for x in ckt[t[0]].fins]) | set([x for x in ckt[t[0]].fins]) | set([x for x in ckt[t[1]].fots]) | set([x for x in ckt[t[1]].fots]) 
+            to_update_b = set([x for x in ckt[t[0]].fins]) | set([x for x in ckt[t[0]].fins]) | set([x for x in ckt[t[1]].fots]) | set([x for x in ckt[t[1]].fots]) 
             
             tmp_a.remove(t[0])
             tmp_b.remove(t[1])
@@ -150,6 +162,12 @@ def partition(ckt, gates):
             tmp_b.add(t[0])
             a_fixed.add(t[1])
             b_fixed.add(t[0])
+
+            to_update_b &= tmp_b
+            to_update_a &= tmp_a
+
+            a_dv = [x for x in a_dv if x[0] not in (to_update_a | to_update_b | a_fixed | b_fixed)]
+            b_dv = [x for x in b_dv if x[0] not in (to_update_a | to_update_b | a_fixed | b_fixed)]
             c = c + 1
         pre_gsum = g_sum
         g_sum, idx = mssl(Gm)
