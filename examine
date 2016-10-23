@@ -1,0 +1,163 @@
+#!/bin/sh
+
+ARGS[0]="s:i:c:rt:l:hdpkboa:"
+input_count=""
+bist=""
+dff=""
+rand_folder=""
+randgz=""
+keep="DEL"
+dodff="YES"
+donodff="YES"
+while getopts "${ARGS[@]}" opt; do 
+    case $opt in 
+        s)
+        num="$OPTARG"
+        ;;
+        r)
+        rand_folder=_random
+        randgz=random.
+        ;;
+        b)
+        bist="nobist"
+        ;;
+        i)
+        input_count=$OPTARG
+        ;;
+        t)
+        tro=$OPTARG
+        ;;
+        c)
+        ckt=$OPTARG
+        ;;
+        l)
+        len=$OPTARG
+        difflen="DIFF"
+        ;;
+        k)
+        keep="KEEP"
+        ;;
+        o)
+        old="OLD"
+        ;;
+        d)
+        dodff=""
+        ;;
+        p)
+        donodff=""
+        ;;
+        :)
+        echo "Needs argument"
+        ;;
+        \?)
+        ;;
+        h)
+        echo "Arguments:"
+        echo "-s runs  run number"
+        echo "-t tro   trojan circuit"
+        echo "-c ckt   benchmark circuit"
+        echo "-l tests number of tests to compare"
+        echo "-i count for nobist, count of simulations run."
+        echo "-r       process random partition ckt"
+        echo "-b       process nobist"
+        echo "-k       keep directories."
+        echo "-o       use old directories.(for debugging)"
+        echo "-d       do not do dff. (for debugging)"
+        echo "-p       do not do nodff. (for debugging)"
+        exit
+        ;;
+    esac
+done
+ext_dir=results_${ckt}_${tro}-${num}${rand_folder} 
+if [ -n "${dodff}" ]; then
+>&2 echo "Processing DFF"
+if [ -f results_${ckt}_${tro}-${num}.${bist}.${input_count}.${randgz}dff.filtered.tar.gz ]; then
+    if [ -z "${old}" ]; then
+        tar -xzf results_${ckt}_${tro}-${num}.${bist}.${input_count}.${randgz}dff.filtered.tar.gz
+    fi
+    if [ -n "${bist}" ]; then
+        >&2 echo "Removing test points."
+        for i in $(ls results_${ckt}_${tro}-${num}${rand_folder}/ | grep -e "bench_filtered$"); do
+            sed -i 's|__TP.*,[01]||g' ${ext_dir}/${i}
+        done
+        for i in $(ls results_${ckt}_${tro}-${num}${rand_folder}/ | grep -e "bench_ff_filtered$"); do
+            sed -i 's|__TP.*,[01]||g' ${ext_dir}/${i}
+        done
+
+        >&2 echo "Removed test points."
+    fi
+    if [ -n "${difflen}" ]; then
+        >&2 echo "Keeping only first $len tests" 
+        for i in $(ls results_${ckt}_${tro}-${num}${rand_folder}/ | grep -e "bench_filtered$"); do
+            head -n ${len} ${ext_dir}/${i} > ${ext_dir}/${i}_${len}
+        done
+        for i in $(ls results_${ckt}_${tro}-${num}${rand_folder}/ | grep -e "bench_ff_filtered$"); do
+            head -n ${len} ${ext_dir}/${i} > ${ext_dir}/${i}_${len}
+        done
+        >&2 echo "Done filtering to ${len} inputs"
+        ff=$(ls results_${ckt}_${tro}-${num}${rand_folder}/| grep "*.bench_ff_filtered*" | grep -e "${len}$" | head -n1)
+        dff=$(ls results_${ckt}_${tro}-${num}${rand_folder}/| grep "*.bench_filtered*" | grep -e "${len}$")
+    else
+        ff=$(ls results_${ckt}_${tro}-${num}${rand_folder}/| grep -e ".bench_ff_filtered$" | head -n1)
+        dff=$(for i in $(ls results_${ckt}_${tro}-${num}${rand_folder}/ | grep -e "bench_filtered$"); do diff -q ${ext_dir}/$ff ${ext_dir}/$i; done | wc -l)
+    fi
+    if [ "$keep" == "DEL" ]; then
+        rm -r results_${ckt}_${tro}-${num}${rand_folder}
+    fi
+    else "No archive for dff"
+fi
+else 
+    echo "Skipping dff"
+fi
+if [ -n "${donodff}" ]; then
+>&2 echo "Processing NoDFF"
+if [ -f results_${ckt}_${tro}-${num}.${bist}.${input_count}.${randgz}filtered.tar.gz ]; then
+    if [ -z "${old}" ]; then
+        tar -xzf results_${ckt}_${tro}-${num}.${bist}.${input_count}.${randgz}filtered.tar.gz
+    else
+        >&2 echo "Skipping extraction."
+    fi
+    if [ -n "${bist}" ]; then
+        for i in $(ls results_${ckt}_${tro}-${num}${rand_folder}/ | grep -e "bench_filtered$"); do
+            sed -i 's|__TP.*,[01]||g' ${ext_dir}/${i}
+        done
+        for i in $(ls results_${ckt}_${tro}-${num}${rand_folder}/ | grep -e "bench_ff_filtered$"); do
+            sed -i 's|__TP.*,[01]||g' ${ext_dir}/${i}
+        done
+    fi
+    if [ -n "${difflen}" ]; then
+        >&2 echo "Keeping only first $len tests" 
+        for i in $(ls results_${ckt}_${tro}-${num}${rand_folder}/ | grep -e "bench_filtered$"); do
+            head -n ${len} ${ext_dir}/${i} > ${ext_dir}/${i}_${len}
+        done
+        for i in $(ls results_${ckt}_${tro}-${num}${rand_folder}/ | grep -e "bench_ff_filtered$"); do
+            head -n ${len} ${ext_dir}/${i} > ${ext_dir}/${i}_${len}
+        done
+        >&2 echo "Done filtering for first $len tests" 
+        ff=$(ls results_${ckt}_${tro}-${num}${rand_folder}/*.bench_ff_filtered* | grep -e "${len}$" | head -n1)
+        nodff=$(for i in results_${ckt}_${tro}-${num}${rand_folder}/*bench_filtered_${len}; do diff -q ${i} ${ff}; done | wc -l)
+    else
+        >&2 echo "Regular NoDff"
+        ff=$(ls results_${ckt}_${tro}-${num}${rand_folder}/| grep -e ".bench_ff_filtered$" | head -n1)
+        nodff=$(for i in $(ls results_${ckt}_${tro}-${num}${rand_folder}/ | grep -e "bench_filtered$"); do diff -q ${ext_dir}/$ff ${ext_dir}/$i; done | wc -l)
+    fi
+    if [ "$keep" == "DEL" ]; then
+        rm -r results_${ckt}_${tro}-${num}${rand_folder}
+    fi
+    else
+    >&2 echo "No non-DFF archive."
+    >&2 echo " results_${ckt}_${tro}-${num}.${bist}.${input_count}.${randgz}filtered.tar.gz"
+fi 
+else
+    echo "Skipping nodff"
+fi
+
+if [ -n "${bist}" ]; then
+    echo "${ckt}, $tro, ${num}, ${input_count}, nobist, $dff, $nodff, ${len}"
+else
+    if [ -z "$randgz" ]; then
+        echo "${ckt}, $tro, ${num}, ${input_count}, pseudo, $dff, $nodff"
+    else
+        echo "${ckt}, $tro, ${num}, ${input_count}, random, $dff, $nodff"
+    fi
+fi

@@ -17,7 +17,7 @@ def grouped(iterable, n):
 
 def is_test_point(ckt, g):
     try:
-        return ckt[g].function == "test_point"
+        return ckt[g].function.lower() == "test_point"
     except:
         return False
 def is_output(ckt, g):
@@ -27,7 +27,7 @@ def is_output(ckt, g):
         return False
 def is_dff(ckt, g):
     try:
-        return ckt[g].function == "dff"
+        return ckt[g].function.lower() == "dff"
     except:
         return False
 

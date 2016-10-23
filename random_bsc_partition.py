@@ -8,8 +8,8 @@ def Bsc_Tp_Generator():
     while 1:
         tmp_bsc = Gate("__BSC_" + str(num), function = "bsc")
         tmp_tp  = Gate("__TP_" + str(num), function = "test_point")
-        tmp_tp.fots = [tmp_bsc.name]
-        tmp_bsc.fins = [tmp_tp.name]
+        tmp_tp.fots = set([tmp_bsc.name])
+        tmp_bsc.fins = set([tmp_tp.name])
         num = num + 1
         yield [copy.deepcopy(tmp_tp), copy.deepcopy(tmp_bsc)]
 
@@ -17,14 +17,18 @@ def add_to_ckt(ckt, victim, pair_gen):
     """ insert a gate pair from a generator into the ckt """
     tp, bsc = next(pair_gen)
     victim_input = random.choice([x for x in ckt[victim].fins if ckt[x].function.lower() is not "bsc"])
-    ckt[victim_input].fots = [x for x in ckt[victim_input].fots if x is not victim_input]
-    ckt[victim].fins = [x for x in ckt[victim].fins if x is not victim_input]
-    ckt[victim].fins.append(bsc.name)
-    ckt[victim_input].fots.append(tp.name)
-    ckt[victim_input].fots.append(bsc.name)
-    bsc.fots.append(victim)
-    tp.fins.append(victim_input)
-    bsc.fins.append(victim_input)
+    try:
+        ckt[victim_input].fots.remove(victim_input)
+    except KeyError:
+        pass
+
+    ckt[victim].fins.remove(victim_input)
+    ckt[victim].fins.add(bsc.name)
+    ckt[victim_input].fots.add(tp.name)
+    ckt[victim_input].fots.add(bsc.name)
+    bsc.fots.add(victim)
+    tp.fins.add(victim_input)
+    bsc.fins.add(victim_input)
 
     ckt[tp.name] = copy.deepcopy(tp)
     ckt[bsc.name] = copy.deepcopy(bsc)
