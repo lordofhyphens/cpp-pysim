@@ -1,0 +1,6 @@
+#!/bin/bash
+w=${2}
+echo "Fixing inputs for ${1} width ${w}"
+
+python fix_partitions.py partitioned/pyTrojan_${w}w${1}.bench-ckt.bench partitioned/pyTrojan_${w}w${1}.bench_partitions.pickle
+./remake_inputs ${1} ${w}

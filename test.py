@@ -48,9 +48,13 @@ for infile in args.file:
         if not args.nopart:
             ckt, partitions = partition_ckt(ckt, POs, args.w)
             print "Size of widest partition:", max([len(x.get_inputs()) for x in partitions])
+        if args.partitions is not None:
+            with open(args.partitions, 'rb') as p:
+                partitions = pickle.load(p)
         if not args.noinput:
             INPUTS=["bsc","input"] 
             test_inputs = []
+            print "Widest partition:", max([len(x.get_inputs()) for x in partitions])
             if args.inputs is None:
                 if args.pe:                
                     for part in partitions:

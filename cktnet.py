@@ -54,7 +54,7 @@ def mssl(x):
         max_ending_here = max(0, max_ending_here + a)
         max_so_far = max(max_so_far, max_ending_here)
         index = index + 1
-    return (max_ending_here, index-1)
+    return (max_ending_here, index)
 
 def find_bscs(ckt, a):
     """ Return all of the gates that are a fan-in to thortpartition. """
@@ -109,7 +109,7 @@ def partition(ckt, gates):
     pool = multiprocessing.Pool(8)
     swap_count = dict()
     try:
-        while g_sum > 0 and prev_gsum != g_sum:
+        while g_sum > 4 and prev_gsum != g_sum:
             tmp_a = copy.deepcopy(a)
             tmp_b = copy.deepcopy(b)
             Gm = []
@@ -148,14 +148,16 @@ def partition(ckt, gates):
                 for j,k in izip(a_dv, b_dv):
                     tmp = sorted_gain(j,k, ckt)
                     if ','.join(sorted([j[0], k[0]])) in swap_count.keys():
+                        a_fixed.add(j[0])
+                        b_fixed.add(k[0])
                         continue # don't use this
                     if max_gain[2] > tmp:
                         break
                     else:
                         max_gain = (j[0], k[0], tmp)
                 if None in max_gain:
-                    a_fixed |= tmp_a
-                    b_fixed |= tmp_b
+                    a_fixed |= a
+                    b_fixed |= b
                     continue 
                 t = max_gain
                 Gm.append(t)
@@ -181,7 +183,7 @@ def partition(ckt, gates):
             print "Finished swapping cycle ", c, " g_sum ", g_sum
             if g_sum > 0:
                 print "Max Gm", g_sum, idx
-                for t in Gm[:idx+1]:
+                for t in Gm[:idx]:
                     print "Actually swapping " , t[0], "<->", t[1]
                     a.remove(t[0])
                     a.add(t[1])
