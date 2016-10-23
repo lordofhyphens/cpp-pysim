@@ -182,6 +182,7 @@ def partition(ckt, gates):
             if g_sum > 0:
                 print "Max Gm", g_sum
                 for t in Gm[:idx]:
+                    print "Actually swapping " , t[0], "<->", t[1]
                     a.remove(t[0])
                     a.add(t[1])
                     b.remove(t[1])
@@ -206,11 +207,11 @@ def part_recur(ckt, initial, w):
 #    (a, b) = partition_mech.partition_once(KLPart.StringVector(list(set(initial))))
     (a, b) = partition(ckt, list(set(initial)))
     print "Coming back up"
-    if len(get_inputs(ckt, a)) > w:
+    if len(get_inputs(ckt, a)) > w and len(a) > 3:
         partition_set = partition_set + part_recur(ckt, a, w)
     else:
         partition_set.append(a)
-    if len(get_inputs(ckt, b)) > w:
+    if len(get_inputs(ckt, b)) > w and len(b) > 3:
         partition_set = partition_set + part_recur(ckt, b, w)
     else:
         partition_set.append(b)
