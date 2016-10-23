@@ -134,15 +134,17 @@ def partition(ckt, gates):
                     b_dv = pool.map(dv_func_b, tmp_b - b_fixed)
                 else:
                     b_dv = b_dv + pool.map(dv_func_b, to_update_b)
-                print len(a_dv), len(b_dv)
+                
                 a_dv = sorted(a_dv, key=getD, reverse=True)
                 b_dv = sorted(b_dv, key=getD, reverse=True)
                 print c, ": Computing max gain"
                 max_gain = (None, None, -999999)
                 for j,k in izip(a_dv, b_dv):
                     tmp = sorted_gain(j,k, ckt)
-                    if tuple(sorted([j[0], k[0]])) in swap_count:
+                    if ','.join(sorted([j[0], k[0]])) in swap_count.keys():
                         continue # don't use this
+                    else:
+                        print swap_count
                     if max_gain[2] > tmp:
                         break
                     else:
@@ -180,7 +182,7 @@ def partition(ckt, gates):
                     a.add(t[1])
                     b.remove(t[1])
                     b.add(t[0])
-                    swap_count[tuple(sorted([t[0],t[1]]))] = 1
+                    swap_count[','.join(sorted([t[0],t[1]]))] = 1
     except KeyboardInterrupt:
         "Aborting generating partition"
 
