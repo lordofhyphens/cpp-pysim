@@ -455,6 +455,7 @@ def partition_ckt(ckt, POs, w = 5):
                     ckt[new_bsc.name] = new_bsc
                     ckt[g].fins.add(new_bsc.name)
                     made[i] = new_bsc.name
+                    p.add(new_bsc.name)
                 else:
                     ckt[made[i]].fots.add(g)
                     ckt[g].fins.add(made[i])
