@@ -5,6 +5,7 @@ import argparse
 import random
 import itertools
 import os.path as path
+import sys
 try:
    import cPickle as pickle
 except ImportError:
@@ -108,10 +109,6 @@ for infile in args.file:
                     t = Trojan(fin = args.fin, fot = args.fot, seed = args.seed)
                 try: 
                     if args.fullcapture:
-                        if partitions is None:
-                            f = open(args.partitions, 'rb')
-                            partitions = pickle.load(f)
-                            f.close()
                         bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t, part = partitions)
                     else:
                         bad_ckt, POs = parasite(copy.deepcopy(ckt), POs, t)
@@ -121,5 +118,7 @@ for infile in args.file:
                     f = open(outdir+"pyTrojan_"+path.basename(infile)+"_"+str(i).zfill(3)+".pickle", 'w')
                     pickle.dump(test_ckt, f)
                     f.close()
-                except Exception:
-                    pass
+                except:
+                    print "Unexpected error:", sys.exc_info()[0]
+                    raise
+

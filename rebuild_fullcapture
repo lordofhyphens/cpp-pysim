@@ -3,9 +3,9 @@
 mkdir -p ${1}_${2}-${3}/part
 mkdir -p ${1}_${2}-${3}/bench
 mkdir -p ${1}_${2}-${3}/input
-cd ${1}_${2}-${3}
-python ../test.py --partitions ../partitioned/pyTrojan_${1}.bench_partitions.pickle -tc ../i85/${2}.bench --fullcapture --noinput --nopart ../partitioned/pyTrojan_${1}.bench-ckt.bench
-cd bench 
+
+python test.py --fullcapture --noinput --nopart --outdir ${1}_${2}-${3} --partitions partitioned/pyTrojan_${1}.bench_partitions.pickle -tc i85/${2}.bench --fullcapture --noinput --nopart partitioned/pyTrojan_${1}.bench-ckt.bench
+cd ${1}_${2}-${3}/bench
 for i in pyTrojan_pyTrojan_${1}.bench-ckt.bench_*-badckt.bench; do newname=$(echo $i | awk -F. '{ print $1"."$3"."$4 }' | cut -b 10- ); mv $i $newname; done
 cd ../..
 cp partitioned/pyTrojan_${1}.bench_inputs.pickle ${1}_${2}-${3}/input
