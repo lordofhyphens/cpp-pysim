@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import argparse
+import csv
 import re
 from cktnet import Partition, read_bench_file
 try:
@@ -24,7 +25,7 @@ def hasTrojanFanout(x):
 
 def getBSCs(ckt, p):
     a = []
-    all_members = [ckt[x].fins for x in p.members]
+    all_members = reduce(lambda x,y : x|y, [ckt[x].fins for x in p.members], set())
     if len(all_members) > 0:
         for l in all_members:
             if type(l) is list:
