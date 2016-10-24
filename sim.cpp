@@ -19,12 +19,14 @@ bool EventSim::get_value(string name) {
   if (gat.size() > 0 and last->first <= t) {
     return last->second;
   } else if (iter == gat.end() and exact == gat.end()) {
+    uninitialized = true;
     return false;
   }
   else if (exact->first <= t) {
     return exact->second;
   }
   else if (iter->first > t) {
+    uninitialized = true;
     return false;
   }
   return iter->second;
@@ -145,12 +147,14 @@ void EventSim::process_gate(const string &name) {
   // store result in the appropriate time slot for this gate.
   // if there is no change, do not add this gate's fanouts to the event list.
   // unless it's an input or a bsc
-  if (result != get_value(name) or g.function == gate_t::INPUT or g.function == gate_t::BSC )
+  if (!uninitialized and (result != get_value(name) or g.function == gate_t::INPUT or g.function == gate_t::BSC ))
   {
     for (auto i = g.fanout.cbegin(); i != g.fanout.cend(); i++)
     {
       new_events[t+g.delay].insert(*i);
     }
+  } else {
+    uninitialized = false; // reset uninitialized to hold back propagation of gates
   }
 
   if (verbosity > 6) cout << "Pushing " << name << ", " << result << " at time " << t+g.delay << endl;

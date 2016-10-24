@@ -6,6 +6,7 @@
 #include <map>
 #include <vector>
 #include <utility>
+#include <algorithm>
 #include <exception>
 #include <stdexcept>
 #include <string>
@@ -45,10 +46,16 @@ class Gate {
       fanout(vector<string>()), output(false), primary_output(false) {}
     Gate(gate_t func, string name, vector<string> fanin, vector<string> fanout, bool isoutput, bool ispo ) : 
       delay(1), function(func), name(name), fanin(fanin),
-      fanout(fanout), output(isoutput), primary_output(ispo), verbosity(0) {}
+      fanout(fanout), output(isoutput), primary_output(ispo), verbosity(0) {
+        std::sort(this->fanin.begin(), this->fanin.end());
+        std::sort(this->fanout.begin(), this->fanout.end());
+      }
     Gate(gate_t func, string name, vector<string> fanin, vector<string> fanout, unsigned int delay, bool isoutput, bool ispo) : 
       delay(delay), function(func), name(name), fanin(fanin),
-      fanout(fanout), output(isoutput), primary_output(ispo), verbosity(0), dff_link(""){}
+      fanout(fanout), output(isoutput), primary_output(ispo), verbosity(0), dff_link(""){
+        std::sort(this->fanin.begin(), this->fanin.end());
+        std::sort(this->fanout.begin(), this->fanout.end());
+      }
 
     Gate(gate_t func, string name, string link, vector<string> fanin, vector<string> fanout, unsigned int delay, bool isoutput, bool ispo) : 
       delay(delay), function(func), name(name), fanin(fanin),
@@ -81,6 +88,7 @@ class EventSim {
     bool new_file;
     void process_events();
     bool run_cycle(string);
+    bool uninitialized;
   protected:
     int verbosity;
 
@@ -102,10 +110,10 @@ class EventSim {
     void dump_results(string);
     void dump_result(string, const unsigned int);
     EventSim() : c(0), t(0), next_inputs(map<string, bool>()), end_sim(false), bist(false), ckt(map<string, Gate>()),
-    inputs(map<size_t, map<string, bool> >()), cycles(vector<size_t>()), events(map<size_t, set<string> >()), verbosity(0)
+    inputs(map<size_t, map<string, bool> >()), cycles(vector<size_t>()), events(map<size_t, set<string> >()), verbosity(0) , uninitialized(false)
     { }
     EventSim(int log_level) : c(0), t(0), next_inputs(map<string, bool>()), end_sim(false), bist(false), ckt(map<string, Gate>()),
-    inputs(map<size_t, map<string, bool> >()), cycles(vector<size_t>()), events(map<size_t, set<string> >()), verbosity(log_level)
+    inputs(map<size_t, map<string, bool> >()), cycles(vector<size_t>()), events(map<size_t, set<string> >()), verbosity(log_level) , uninitialized(false)
     { }
 };
 #endif
