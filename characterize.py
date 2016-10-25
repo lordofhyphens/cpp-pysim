@@ -16,6 +16,12 @@ parser.add_argument('--out', type=str, default=None, help="Output file to write 
 parser.add_argument('file', metavar='N', type=str, nargs='+',
                    help='pickled partition file')
 args = parser.parse_args()
+z = [ "infile", "bsc_count", "part_count", "avg_part_size", "min_part_size", "max_part_size", "median_part_size", "avg_w"]
+if args.out is not None:
+    with open(args.out, 'ab') as f:
+        f.write(",".join(z))
+else:
+    print ",".join(z)
 
 for infile in args.file:
     with open(infile, 'rb') as f:
@@ -37,7 +43,7 @@ for infile in args.file:
 
         if args.out is not None:
             with open(args.out, 'ab') as f:
-                ",".join(stats)
+                f.write(",".join(stats))
         else:
             print ",".join(stats)
 
