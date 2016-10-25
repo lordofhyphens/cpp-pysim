@@ -16,7 +16,7 @@ parser.add_argument('--out', type=str, default=None, help="Output file to write 
 parser.add_argument('file', metavar='N', type=str, nargs='+',
                    help='pickled partition file')
 args = parser.parse_args()
-z = [ "infile", "bsc_count", "part_count", "avg_part_size", "min_part_size", "max_part_size", "median_part_size", "avg_w"]
+z = [ "infile", "bsc_count", "ckt size","sum of part members", "part_count", "avg_part_size", "min_part_size", "max_part_size", "median_part_size", "avg_w"]
 if args.out is not None:
     with open(args.out, 'ab') as f:
         f.write(",".join(z))
@@ -26,8 +26,11 @@ else:
 for infile in args.file:
     with open(infile, 'rb') as f:
         parts = pickle.load(f)
+        for p in parts:
+            print p.members
         ckt = parts[0].ckt
         bsc_count = len(set([x[0] for x in ckt.iteritems() if x[1].function.lower() == "bsc"]))
+        len(ckt) 
         part_count = len(parts)
         mems = [len(x.members) for x in parts]
 
@@ -38,7 +41,7 @@ for infile in args.file:
 
         avg_w = sum([len(x.get_inputs()) for x in parts]) / len(parts)
 
-        stats = [ infile, bsc_count, part_count, avg_part_size, min_part_size, max_part_size, median_part_size, avg_w]
+        stats = [ infile, bsc_count, len(ckt),sum(mems), part_count, avg_part_size, min_part_size, max_part_size, median_part_size, avg_w]
         stats = map(lambda x:str(x), stats)
 
         if args.out is not None:
@@ -46,4 +49,3 @@ for infile in args.file:
                 f.write(",".join(stats))
         else:
             print ",".join(stats)
-

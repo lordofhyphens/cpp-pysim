@@ -109,7 +109,7 @@ def partition(ckt, gates):
     pool = multiprocessing.Pool(8)
     swap_count = dict()
     try:
-        while g_sum > 4 and prev_gsum != g_sum:
+        while g_sum > 0 and prev_gsum != g_sum:
             tmp_a = copy.deepcopy(a)
             tmp_b = copy.deepcopy(b)
             Gm = []
@@ -251,19 +251,26 @@ def gen_test_points():
 
 class Partition(object):
     INPUTS=["bsc","input"]
-    def __init__(self, ckt, members=[], initial_frontier = [], max_w = 0, available = []):
-        self.members = members
+    def __init__(self, ckt, members=set(), initial_frontier = set(), max_w = 0, available = set()):
+        self.members = set()
+        for n in members:
+            self.members.add(n)
         self.ckt = ckt
         self.max_w = max_w
-        self.available = available
-        self.frontier = initial_frontier # the furthest-in input gates.
-        self.w = len(set([y for sublist in [self.ckt[x].fins for x in self.frontier if len(self.ckt[x].fins) > 0] for y in sublist]))
-        self.members = self.members + self.frontier
-        self.output = self.frontier # initial gates are the output.
+        self.available = set()
+        for n in available:
+            self.available.add(n)
+        self.frontier = set()
+        for n in initial_frontier:
+            self.frontier.add(n)
+        self.w = len(self.frontier)
+
+        self.output = set()
         if self.w > self.max_w:
             print self.w,"initial width"
     def add(self, x):
-        self.members.append(x)
+        self.members.add(x)
+        self.frontier.add(x)
         self.update()
 
     def get_inputs(self):
@@ -274,33 +281,30 @@ class Partition(object):
         Update internal parameters based on the member list, in case it was modified externally.
         """
         self.w = len(set([y for sublist in [self.ckt[x].fins for x in self.frontier if len(self.ckt[x].fins) > 0] for y in sublist]))
-        self.output = [x for x in self.members if len(self.ckt[x].fots) == 0]
+        self.output = set([x for x in self.members if len(self.ckt[x].fots) == 0])
         self.max_w = self.w
 
     def grow(self):
         """Expand this partition out one stage, if possible"""
-        if len(self.frontier) == 0:
-            return None # nothing left in the frontier
-        candidates = []
-        for f in self.frontier:
-            for g in [x for x in self.ckt[f].fins if x in self.available and not x in self.members]:
-                candidates.append((g, len(self.ckt[g].fins)-1 if len(self.ckt[g].fins) > 0 else 0))
-        candidates = list(reversed(sorted(candidates, key=itemgetter(1))))
-        while len(candidates) > 0:
-            victim = candidates.pop()
-            if victim[0] in self.available:
-                self.frontier.append(victim[0])
-                self.members.append(victim[0])
-                self.available.remove(victim[0])
-                self.frontier = [x for x in self.frontier if len([y for y in self.ckt[x].fins if not y in self.members and y in self.available]) > 0] # remove frontier entries with nothing in them
-                self.w = len(set([y for sublist in [self.ckt[x].fins for x in self.frontier if len(self.ckt[x].fins) > 0] for y in sublist])) # recalculate w
-                if self.w >= self.max_w - 1:
-                    self.members.remove(victim[0])
-                    self.available.append(victim[0])
-                    self.frontier.remove(victim[0])
-                    return None
-        self.frontier = [x for x in self.frontier if len([y for y in self.ckt[x].fins if not y in self.members and y in self.available]) > 0] # remove frontier entries with nothing in them
-        return True
+        # expansion - get all fanins of this gate, except for ones already in
+        next_frontier = set()
+        added = 0
+        remove = set()
+        for g in self.frontier:
+            new_fin = len((self.ckt[g].fins - self.members)) - 1
+            if (new_fin + self.w) < self.max_w:
+                print "Adding", g, "to partition"
+                # add this to the partition
+                self.members.add(g)
+                next_frontier |= self.ckt[g].fins - self.members
+                self.w += new_fin + 1
+            else:
+                remove.add(g)
+        self.frontier = next_frontier
+        if  len(self.frontier) == 0:
+            return None
+        else:
+            return True
 
     def size(self):
         return len(self.members)
@@ -435,6 +439,58 @@ def read_bench_file(f):
     print "Parsed ckt"
     return ckt, PIs, POs
 
+def greedy_partition_ckt(ckt, POs, w = 5):
+    print "Sorting ckt"
+    sorted_ckt = [x for x in sort_topological(ckt)]
+    print "Sorted ckt"
+    unplaced = set([x for x in sorted_ckt if x not in POs])
+     
+    parts = []
+    for po in POs:
+       p = Partition(ckt=ckt, initial_frontier=set([po]), available=unplaced, max_w = w)   
+       while p.grow() is not None:
+           print "Growing partition out another layer."
+       parts.append(p)
+       unplaced -= p.members
+
+    
+    while len(unplaced) > 0:
+       start = random.sample(unplaced, 1)
+       p = Partition(ckt=ckt, initial_frontier=start, available=unplaced, max_w = w)
+       while p.grow() is not None:
+           print "Growing partition out another layer."
+           pass
+       unplaced -= p.members
+       parts.append(p)
+    bscs = gen_bsc()
+    tps = gen_test_points()
+    print "Inserting BSCs"
+    for p in parts:
+        made = dict()
+        for i in find_bscs(ckt, p.members):
+            part_gates = [x for x in p.members if i in ckt[x].fins]
+            for g in part_gates:
+                ckt[i].fots.remove(g)
+                if i not in made:
+                    new_bsc = bscs.next()
+                    new_bsc.fins.add(i)
+                    new_bsc.fots.add(g)
+                    ckt[new_bsc.name] = new_bsc
+                    ckt[g].fins.add(new_bsc.name)
+                    made[i] = new_bsc.name
+                    p.add(new_bsc.name)
+                else:
+                    ckt[made[i]].fots.add(g)
+                    ckt[g].fins.add(made[i])
+                ckt[g].fins.remove(i)
+        for k in find_tps(ckt, p.members):
+            new_tp = tps.next()
+            new_tp.fins.add(k)
+            ckt[new_tp.name] = new_tp
+            p.add(new_tp.name)
+            p.output.add(new_tp.name)
+
+    return ckt, parts
 def partition_ckt(ckt, POs, w = 5):
     print "Partitioning circuit"
     part_list = part_recur(ckt, list(set(ckt.iterkeys())), w)

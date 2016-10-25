@@ -111,7 +111,7 @@ def parasite(ckt, pos, trojan, part = None, seed = None):
         attach_points = [x for x in trojan.gates if "DUMMY" in trojan.gates[x].fins]
         troj_out = [x for x,v in trojan.gates.iteritems() if len(v.fots) == 0 or "DUMMY" in v.fots]
         if part is not None:
-            gates_to_use = random.choice([x for x in part if len(x.members) >= (len(attach_points) + len(troj_out))]).members
+            gates_to_use = random.choice([x for x in part if len([y for y in x.members if ckt[y].function.lower() is not "test_point"]) > (len(attach_points) + len(troj_out))]).members
             gates_to_use = [x for x in gates_to_use if ckt[x].function.lower() is not "test_point"]
             partial_fanin = partial(get_fanin_cone, ckt=ckt, available=gates_to_use)
             print "Using partition", str(gates_to_use)
@@ -156,8 +156,8 @@ def parasite(ckt, pos, trojan, part = None, seed = None):
             print "Attempts remaining:", str(20 - cycles)
         else:
             restart = False
-        if cycles > 20:
-            raise RuntimeError("Couldn't find an appropriate attachment for trojan after 20 attempts")
+        if cycles > 50:
+            raise RuntimeError("Couldn't find an appropriate attachment for trojan after 50 attempts")
     print "Found enough allowed gates to insert trojan."
     for g, att in to_attach.iteritems():
         trojan.gates[g].fins = trojan.gates[g].fins + att

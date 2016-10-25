@@ -1,5 +1,5 @@
 from trojan import Trojan, parasite
-from cktnet import read_bench_file, partition_ckt, write_bench_file, random_set
+from cktnet import read_bench_file, partition_ckt, write_bench_file, random_set, greedy_partition_ckt
 import copy
 import argparse
 import random
@@ -31,6 +31,7 @@ parser.add_argument('--pe', dest='pe', action='store_true', help='Generate as ma
 parser.set_defaults(feature=False, trojan=True)
 parser.add_argument('--notrojan', dest='trojan', action='store_false', help="Don't add Trojans.")
 parser.add_argument('--nopart', action='store_true', help='Don\'t generate partitions.')
+parser.add_argument('--greedy', action='store_true', help='Generate greedy partitions.')
 parser.add_argument('--noinput', action='store_true', help='Don\'t generate inputs.')
 parser.add_argument('--fullcapture', action='store_true', help="Only put Trojans inputs/outputs into the same partition")
 fixed_group.add_argument('-tc', type=str, default=None, help="Use a random file from these arguments as the trojan instead of generating")
@@ -47,7 +48,11 @@ for infile in args.file:
             static_trojan.load(tckt)
         ckt, PIs, POs = read_bench_file(infile)
         if not args.nopart:
-            ckt, partitions = partition_ckt(ckt, POs, args.w)
+            if args.greedy:
+                ckt, partitions = greedy_partition_ckt(ckt, POs, args.w)
+            else:
+                ckt, partitions = partition_ckt(ckt, POs, args.w)
+
             print "Size of widest partition:", max([len(x.get_inputs()) for x in partitions])
         if args.partitions is not None:
             with open(args.partitions, 'rb') as p:
