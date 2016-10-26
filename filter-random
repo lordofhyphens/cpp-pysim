@@ -1,6 +1,6 @@
 #!/bin/bash
 
   python filter.py --ckt ${1}_${2}-${3}_random/bench/pyTrojan_${1}.bench-ckt.bench results_${1}_${2}-${3}_random/*.bench results_${1}_${2}-${3}_random/*.bench_ff
-  tar -cf results_${1}_${2}-${3}.random.filtered.tar results_${1}_${2}-${3}_random/*_filtered
-  pigz results_${1}_${2}-${3}.random.filtered.tar
+  tar -cvf results_${1}_${2}-${3}.${4}.${5}.filtered.tar results_${1}_${2}-${3}_random/*_filtered
+  pigz results_${1}_${2}-${3}.${4}.${5}.random.filtered.tar
   rm results_${1}_${2}-${3}_random/*_filtered
