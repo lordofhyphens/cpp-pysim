@@ -1,0 +1,7 @@
+#!/bin/bash
+w=${2}
+echo "Partitioning ${1} width ${w}"
+
+cp i89/${1}.bench i89/${w}w${1}.bench
+python ./test.py --greedy --outdir partitioned --notroj --pe i89/${w}w${1}.bench
+cp partitioned/{bench,input,part}/* partitioned
