@@ -521,7 +521,6 @@ def partition_ckt(ckt, POs, w = 5):
             new_tp.fins.add(k)
             ckt[new_tp.name] = new_tp
             p.add(new_tp.name)
-            ckt[p.members[0]].tps.append(new_tp.name)
 
     return ckt, parts
 
