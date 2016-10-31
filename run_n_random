@@ -21,15 +21,16 @@
 
 start=$1
 end=$2
+ckt=$3
+shift
 shift
 shift
 
-for k in $*; do 
-  for j in aoi c17; do
+for k in $ckt; do 
+  for j in $*; do
     for i in $(seq $start $end); do 
         ./rebuild_random ${k} ${j} ${i}; 
         ./run_random.sh ${k} ${j} ${i}; 
-        ./filter-dff-random ${k} ${j} ${i}; 
         ./filter-random ${k} ${j} ${i}; 
         tar -czf results_${k}_${j}-${i}.all.random.tar.gz results_${k}_${j}-${i}_random 
     done; 

@@ -31,7 +31,6 @@ for k in $ckt; do
       ./rebuild ${k} ${j} ${i};
       ./run_rebuild ${k} ${j} ${i}; 
       ./filter ${k} $j ${i}; 
-      ./filter-dff ${k} $j $i; 
       tar -czf results_${k}_${j}-${i}.all.tar.gz results_${k}_${j}-${i}
     done; 
   done; 
